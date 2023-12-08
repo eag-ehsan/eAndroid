@@ -86,7 +86,7 @@ public class Login extends Fragment implements View.OnClickListener{
         signupBtn.setOnClickListener(this);
         loginBtn = (Button) view.findViewById(R.id.btnLogin);
         loginBtn.setOnClickListener(this);
-        btnBack = (Button) view.findViewById(R.id.dialogOK);
+        btnBack = (Button) view.findViewById(R.id.dialogBack);
         btnBack.setOnClickListener(this);
         dlgPage = (LinearLayout) view.findViewById(R.id.dialogPage);
         dlgOk = (Button) view.findViewById(R.id.dialogOK);
@@ -108,7 +108,7 @@ public class Login extends Fragment implements View.OnClickListener{
         if(v.getId()==R.id.btnLogin){
             myusr0.setmyID("0");
             myusr0.setParams("name","spare");
-            myusr0.setValues(txtNameSignup.getText().toString(), "spare");
+            myusr0.setValues(txtNameLogin.getText().toString(), "spare");
             myusr0.setStarterUrl("https://www.ourartag.com/usr.php?liivx=");
             myusr0.send2Params(5);
             timer1000 = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 1000, true);
@@ -119,7 +119,7 @@ public class Login extends Fragment implements View.OnClickListener{
         if(v.getId()==R.id.btnSignup){
             myusr0.setmyID("add");
             myusr0.setParams("name","spare");
-            myusr0.setValues(txtNameLogin.getText().toString(), "spare");
+            myusr0.setValues(txtNameSignup.getText().toString(), "spare");
             myusr0.setStarterUrl("https://www.ourartag.com/usr.php?liivx=");
             myusr0.send2Params(5);
             timer1001 = new esTimer(new Runnable() {public void run() {usrSignupCheck();}}, 1000, true);
@@ -141,7 +141,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 String isID = strout.substring(2);
                 int tmpit = Integer.parseInt(isID);
                 myConfigs.set("myID",tmpit + "");
-
+                Log.i("LLOOGGIINN", "***************************************** myConfigs.set " + tmpit);
                 myusr0.set_isSend2ParamAns(false);
                 timer1000.stopTimer();
                 dialogMsg.setText("Login is Ok, restart app to login automatically");
@@ -173,8 +173,11 @@ public class Login extends Fragment implements View.OnClickListener{
                 dlgPage.setVisibility(View.VISIBLE);
                 Log.i("LLOOGGIINN", "***************************************** >> " + strout);
             }else if(isOk.equals("er")){
-                
-                Log.i("LLOOGGIINN", "***************************************** >> " + strout);
+                dialogMsg.setText(" Connecting to Server Failed. Please check you internet and try again");
+                dlgPage.setVisibility(View.VISIBLE);
+                myusr0.set_isSend2ParamAns(false);
+                timer1001.stopTimer();
+                Log.i("LLOOGGIINN", "***************************************** >> er");
             }else{
 
             }

@@ -21,6 +21,8 @@ public class Config {
         configuration = new Properties();
         pathapp =  "/data/data/com.ourartag.eandroid/" ;
         configurationFile = pathapp + "config.ini";
+
+
     }
 
     public boolean load() {
@@ -51,9 +53,11 @@ public class Config {
 
     public void set(String key, String value) {
         configuration.setProperty(key, value);
+        store();
     }
 
     public String get(String key, String defaulti) {
+        load();
         String tmpconfig = configuration.getProperty(key);
         if(tmpconfig==null){
             return defaulti;
