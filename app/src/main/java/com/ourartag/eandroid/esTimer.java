@@ -6,7 +6,7 @@ public class esTimer {
 
     private int interval;
     public esTimer (Runnable runnable, int interval, boolean started) {
-        paused = false;
+        paused = true;
         handler = new Handler ();
         this.runnable = runnable;
         this.interval = interval;

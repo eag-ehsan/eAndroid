@@ -39,17 +39,19 @@ public class MainActivity extends AppCompatActivity {
         return mContext;
     }
     Toolbar mToolbar;
-    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus;
+    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif;
     FragmentContainerView myFrag1;
-    esTimer mainTimer, mLivelogTimer;
-    String myID, myName;
-    myVolley mLivelog;
+    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer;
+    String myID, myName, notifCTS, cmdCTS;
+    myVolley mLivelog, mNotifreg, mSetNotifCTX;
     Button btn1, dlgOk;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
     Config myConfigs;
     LinearLayout dlgPage;
-    int MAIN_LOOP_SEC = 15;
+    MenuItem about_menu, logout_menu;
+    Boolean menu_stat;
+    int MAIN_LOOP_SEC = 10;
     //endregion
 
     @Override
@@ -67,9 +69,13 @@ public class MainActivity extends AppCompatActivity {
         //region Class get Objrcts
         mContext = this;
         mLivelog = new myVolley(this);
+        mNotifreg = new myVolley(this);
+        mSetNotifCTX = new myVolley(this);
         myConfigs = new Config();
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 1000 * MAIN_LOOP_SEC, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 1000, false);
+        mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 1000, false);
+        mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 1000, false);
         //endregion
 
         //region findViewById
@@ -78,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         myFrag1 = findViewById(R.id.fragmentContainerView);
         dlgOk = findViewById(R.id.dialogOK);
         mainAppStatus = findViewById(R.id.mainAppStatus);
+        textViewRespoNotif = findViewById(R.id.txtResponotif);
         //endregion
 
         //region Configs
@@ -90,7 +97,9 @@ public class MainActivity extends AppCompatActivity {
         //endregion
 
         //region defualt values
-
+        menu_stat = false;
+        notifCTS = "";
+        cmdCTS = "";
         //endregion
 
         //region setOnClickListeners
@@ -112,11 +121,14 @@ public class MainActivity extends AppCompatActivity {
             dlgPage.setVisibility(View.VISIBLE);
         }
         if(myID.equals("0")){
+            myFrag1.setVisibility(View.VISIBLE);
             Fragment mLogin = new Login();
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fm.beginTransaction();
             fragmentTransaction.replace(R.id.fragmentContainerView, mLogin);
             fragmentTransaction.commit();
+            menu_stat = false;
+            invalidateOptionsMenu();
         }else {
             loginInit();
         }
@@ -129,6 +141,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.eandroid_menu, menu);
+        about_menu = (MenuItem) menu.findItem(R.id.menu_about);
+        logout_menu = (MenuItem) menu.findItem(R.id.menu_logout);
         Log.i("MMMMMMMMM", "onCreateOptionsMenu");
         return true;
     }
@@ -147,8 +161,14 @@ public class MainActivity extends AppCompatActivity {
         }else if(item.getItemId()==R.id.menu_logout){
             myConfigs.set("myID","0");
             myConfigs.set("myName","nobody");
-
-            System.exit(0);
+            myFrag1.setVisibility(View.VISIBLE);
+            Fragment mLogin = new Login();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fm.beginTransaction();
+            fragmentTransaction.replace(R.id.fragmentContainerView, mLogin);
+            fragmentTransaction.commit();
+            menu_stat = false;
+            invalidateOptionsMenu();
             Log.i("MMMMMMMMM", "+++++++++++++++++++++++++++++++++++++++++++++++++Clicked on Logout");
 //            View menuItemView = findViewById(R.id.moreVertical);
 //            PopupMenu popup = new PopupMenu(getContext(), menuItemView);
@@ -159,7 +179,13 @@ public class MainActivity extends AppCompatActivity {
             return super.onOptionsItemSelected(item);
         }
     }
-
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu){
+        logout_menu.setEnabled(menu_stat);
+        about_menu.setEnabled(menu_stat);
+        super.onPrepareOptionsMenu(menu);
+        return true;
+    }
     //endregion
 
     //region public methods
@@ -179,13 +205,33 @@ public class MainActivity extends AppCompatActivity {
     public void turnOffFrag(){
         myFrag1.setVisibility(View.GONE);
     }
+
+    public void loginInit(){
+        myID = myConfigs.get("myID","0");
+        myName = myConfigs.get("myName","");
+        toolbarTxtVeiw.setText(myName);
+        myFrag1.setVisibility(View.GONE);
+        mLivelog.setmyID(myID);
+        mLivelog.setStarterUrl("https://www.ourartag.com/live.php?liivx=");
+        mNotifreg.setmyID(myID);
+        mNotifreg.setStarterUrl("https://www.ourartag.com/reqnotif.php?liivx=");
+        mSetNotifCTX.setmyID(myID);
+        mSetNotifCTX.setStarterUrl("https://www.ourartag.com/setp.php?liivx=");
+        mainTimer.startTimer();
+        menu_stat = true;
+        invalidateOptionsMenu();
+    }
     //endregion
 
     //region private methods
     private void mainLoop(){
+        Log.i("oooooooooooo", "++++++++++++++++++livelog is " + mLivelogTimer.isTimerOn().toString() + " ++++++++++++++++++++++++++++++mainLoop");
         if(!mLivelogTimer.isTimerOn()){
             mLivelog.singleRequest(2);
             mLivelogTimer.startTimer();
+        }else {
+            mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
+            mainAppStatus.setText("Server response timeout. check internet");
         }
     }
     private void mLivelogResponseCheck(){
@@ -195,10 +241,17 @@ public class MainActivity extends AppCompatActivity {
             if(isOk.equals("sq")){
                 mLivelog.singleRequest(2);
             }else if(isOk.equals("er")){
+                mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 mainAppStatus.setText("Server said Error in its response.");
                 mLivelogTimer.stopTimer();
             }else if(isOk.equals("11") || isOk.equals("00") || isOk.equals("10") || isOk.equals("01")){
+                mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 mainAppStatus.setText("Connection OK, you are Online");
+                notifCTS = isOk.substring(1);
+                cmdCTS = isOk.substring(0,1);
+                if(notifCTS.equals("1")){
+                    getNotif();
+                }
 
                 mLivelogTimer.stopTimer();
             }else{
@@ -206,12 +259,48 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    private void loginInit(){
-        toolbarTxtVeiw.setText(myName);
-        myFrag1.setVisibility(View.GONE);
-        mLivelog.setmyID(myID);
-        mLivelog.setStarterUrl("https://www.ourartag.com/live.php?liivx=");
-        mainTimer.startTimer();
+    private void getNotif(){
+        mNotifreg.singleRequest(180);
+        mNotifregTimer.startTimer();
+    }
+    private void getNotifCheck(){
+        if(mNotifreg.get_isSingleRequestAns()){
+            String respo = mNotifreg.get_ansSingleRequest();
+            String isOk = respo.substring(0,6);
+            if(isOk.equals("cancel")){
+                mNotifregTimer.stopTimer();
+            }else if(isOk.equals("error!")){
+                mNotifregTimer.stopTimer();
+                getNotif();
+            }else if(isOk.equals("<html>")){
+                mNotifregTimer.stopTimer();
+                String responotif = respo.substring(53);
+                textViewRespoNotif.setText(responotif);
+                setNotifCTXf();
+            }else{
+
+            }
+        }
+    }
+    private void setNotifCTXf(){
+        mSetNotifCTX.setParams("p1","v1", "p2", "v2");
+        mSetNotifCTX.setValues("notifCTS", "0", "notifCTR", "1");
+        mSetNotifCTX.send4Params(2);
+        mSetNotifCTXTimer.startTimer();
+    }
+    private void setNotifCTXcheck(){
+        if(mSetNotifCTX.get_isSend4ParamAns()){
+            String isOk = mSetNotifCTX.get_ansSend4Param();
+            if(isOk.equals("ok")){
+                mNotifregTimer.stopTimer();
+
+            }else if(isOk.equals("er")){
+                mNotifregTimer.stopTimer();
+
+            }else{
+
+            }
+        }
     }
     //endregion
 }

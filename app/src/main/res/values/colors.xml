@@ -5,4 +5,10 @@
     <color name="toolicolor">#7C3002</color>
     <color name="errcolo">#D50101</color>
     <color name="okcolor">#4EBC00</color>
+    <color name="dark_bg1">#75004E</color>
+    <color name="dark_bg2">#023771</color>
+    <color name="dark_bg3">#000823</color>
+    <color name="dark_bg4">#710202</color>
+    <color name="dark_bg5">#230000</color>
+    <color name="light_text1">#9DFFAB</color>
 </resources>
