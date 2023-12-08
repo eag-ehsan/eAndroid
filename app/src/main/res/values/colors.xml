@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="toolicolor">#7C3002</color>
+    <color name="errcolo">#D50101</color>
+    <color name="okcolor">#4EBC00</color>
 </resources>
