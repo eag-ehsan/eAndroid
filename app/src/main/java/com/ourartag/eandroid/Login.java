@@ -98,8 +98,8 @@ public class Login extends Fragment implements View.OnClickListener{
         txtNameSignup = (EditText) view.findViewById(R.id.txtNameSignup);
         txtPassLogin = (EditText) view.findViewById(R.id.txtPassLogin);
         txtPassSignup = (EditText) view.findViewById(R.id.txtPassSignup);
-        dialogMsg = (TextView) view.findViewById(R.id.vtxtDialogMsg);
-        resLogin = (TextView) view.findViewById(R.id.vtxtDialogMsg);
+        dialogMsg = (TextView) view.findViewById(R.id.vtxtDialogMsgLogin);
+        resLogin = (TextView) view.findViewById(R.id.vtxtDialogMsgLogin);
         return view;
     }
 

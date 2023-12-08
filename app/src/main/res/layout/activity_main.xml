@@ -60,8 +60,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:alpha="1"
-        android:background="#FFC9C9"
-        android:backgroundTint="#FFA1A1"
+        android:background="#FFEBEB"
+        android:backgroundTint="#FDF7DB"
         android:backgroundTintMode="multiply"
         android:orientation="horizontal"
         android:visibility="gone">
@@ -84,7 +84,7 @@
             <TextView
                 android:id="@+id/vtxtDialogMsg"
                 android:layout_width="match_parent"
-                android:layout_height="209dp"
+                android:layout_height="wrap_content"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -97,6 +97,32 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="OK" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="50dp" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="OurArtAG copyright ©2023-2027 for OFAC users only"
+                android:textAlignment="center"
+                android:textSize="12sp" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="15dp" />
+
+            <TextView
+                android:id="@+id/ourartaglink"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:text="https://www.ourartag.com"
+                android:textAlignment="center"
+                android:textSize="12sp" />
+
         </LinearLayout>
 
         <Space
@@ -111,18 +137,45 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/mainAppStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Welcome to our community. you are one of us now"
             android:textAlignment="center"
             android:textSize="16sp" />
 
+
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="horizontal"></LinearLayout>
+            android:orientation="horizontal">
 
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="0.02" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="0.8"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:background="@drawable/my_custom_background"
+                android:orientation="vertical"></LinearLayout>
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="0.02" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.02" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

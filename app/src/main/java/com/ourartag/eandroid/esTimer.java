@@ -6,6 +6,7 @@ public class esTimer {
 
     private int interval;
     public esTimer (Runnable runnable, int interval, boolean started) {
+        paused = false;
         handler = new Handler ();
         this.runnable = runnable;
         this.interval = interval;
@@ -41,5 +42,12 @@ public class esTimer {
         paused = true;
     }
 
+    public Boolean isTimerOn(){
+        if(paused){
+            return false;
+        }else{
+            return true;
+        }
+    }
 
 }

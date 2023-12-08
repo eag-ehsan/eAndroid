@@ -45,6 +45,8 @@ public class myVolley {
     }
 
 
+
+
     public void setStarterUrl(String st1){
         myStartUrl = st1;
     }
@@ -59,6 +61,11 @@ public class myVolley {
         mValue1 = v1;
         mValue2 = v2;
     }
+
+
+
+
+
     public void singleRequest(int outLenght) {
         String uurl = myStartUrl + myID;
         Log.i("singleRequest", "---------------url: " + uurl);
@@ -71,12 +78,33 @@ public class myVolley {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                ansSingleRequest = "verror";
+                String tempSingleReq = "sqError";
+                if(tempSingleReq.length()>outLenght){
+                    ansSingleRequest = tempSingleReq.substring(0, outLenght);
+                }else{
+                    ansSingleRequest = tempSingleReq;
+                }
                 isSingleRequestAns = true;
             }
         });
         queue.add(stringR);
     }
+    public Boolean get_isSingleRequestAns(){
+        return isSingleRequestAns;
+    }
+    public void set_isSingleRequestAns(Boolean vvv){
+        isSingleRequestAns = vvv;
+    }
+    public String get_ansSingleRequest(){
+        return ansSingleRequest;
+    }
+
+
+
+
+
+
+
     public void send2Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1 + "&" + mParam2 + "=" + mValue2;
         Log.i("send2Params", "---------------url: " + uurl);
@@ -95,17 +123,6 @@ public class myVolley {
         });
         queue.add(stringR);
     }
-    public Boolean get_isSingleRequestAns(){
-        return isSingleRequestAns;
-    }
-    public void set_isSingleRequestAns(Boolean vvv){
-        isSingleRequestAns = vvv;
-    }
-    public String get_ansSingleRequest(){
-        return ansSingleRequest;
-    }
-
-
     public Boolean get_isSend2ParamAns(){
         return isSend2ParamAns;
     }

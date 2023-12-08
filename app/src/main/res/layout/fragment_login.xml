@@ -36,7 +36,7 @@
                     android:layout_height="112dp" />
 
                 <TextView
-                    android:id="@+id/vtxtDialogMsg"
+                    android:id="@+id/vtxtDialogMsgLogin"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Error Messages"
