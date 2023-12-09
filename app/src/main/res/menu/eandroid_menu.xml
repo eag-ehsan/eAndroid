@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/menu_logout"
+    <item
+        android:id="@+id/menu_logout"
         android:icon="@drawable/right_from_bracket_20"
         android:title="@string/menu_logout" />
     <item android:id="@+id/menu_about"
         android:icon="@drawable/address_card_20"
         android:title="@string/menu_about"/>
+    <item
+        android:id="@+id/menu_sendloc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/location_smile"
+        android:title="@string/menu_sendcoords"
+        app:showAsAction="ifRoom" />
 </menu>

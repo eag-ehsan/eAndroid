@@ -81,7 +81,11 @@ public class myVolley {
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
                 response -> {
-                    String resp = response.substring(0, outLenght);
+                    int b = outLenght;
+                    if(b>180){
+                        b = response.indexOf("</body>") + 14;
+                    }
+                    String resp = response.substring(0, b);
                     ansSingleRequest = resp;
                     isSingleRequestAns = true;
                     Log.i("singleRequest", "--------------------------------------------resp: " + ansSingleRequest);

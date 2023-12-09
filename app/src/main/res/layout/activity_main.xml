@@ -26,7 +26,7 @@
             android:ellipsize="end"
             android:gravity="left|center_vertical"
             android:maxLines="1"
-            android:text="Welcome"
+            android:text="@string/lng_tophead"
             android:textAppearance="@android:style/TextAppearance.WindowTitle"
             android:textSize="20sp"
             android:visibility="visible" />
@@ -142,7 +142,7 @@
             android:layout_height="0dp"
             android:layout_weight="3.5"
             android:background="@color/header_footer_bg"
-            android:text="Welcome to our community. you are one of us now"
+            android:text="@string/lng_mainStatus"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="16sp" />
@@ -182,7 +182,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:paddingVertical="2dp"
-                        android:text="Message from server:"
+                        android:text="@string/lng_serverlabel"
                         android:textColor="@color/white" />
 
                     <TextView
@@ -207,7 +207,9 @@
                     <ListView
                         android:id="@+id/main_list"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        android:layout_height="match_parent"
+                        android:stackFromBottom="true"
+                        android:transcriptMode="alwaysScroll"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -236,7 +238,6 @@
                 android:ems="10"
                 android:inputType="text"
                 android:minHeight="25dp"
-                android:text="Name"
                 android:textSize="20sp"
                 tools:ignore="TouchTargetSizeCheck" />
 
@@ -247,7 +248,7 @@
                 android:layout_weight="0.1"
                 android:background="#5FC7FF"
                 android:src="@drawable/paper_plane_30"
-                android:tint="#0047BF" />
+                app:tint="#0047BF" />
 
             <Space
                 android:layout_width="wrap_content"

@@ -21,7 +21,7 @@
 
             android:id="@+id/zereroot"
             android:layout_width="match_parent"
-            android:layout_height="19dp"
+            android:layout_height="wrap_content"
             android:gravity="top|left|fill_vertical"
             android:orientation="horizontal">
 

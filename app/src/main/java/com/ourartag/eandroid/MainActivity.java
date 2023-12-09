@@ -15,14 +15,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,6 +43,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -50,23 +56,24 @@ public class MainActivity extends AppCompatActivity {
     Toolbar mToolbar;
     TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend;
     FragmentContainerView myFrag1;
-    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer;
+    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer;
     String myID, myName, notifCTS, cmdCTS;
-    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat;
+    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats;
     Button btn1, dlgOk;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
     Config myConfigs;
     LinearLayout dlgPage;
     MenuItem about_menu, logout_menu;
-    Boolean menu_stat, periodPerocess;
-    int MAIN_LOOP_SEC = 10, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat;
+    Boolean menu_stat, periodPerocess, chatgetPerocess;
+    int MAIN_LOOP_SEC = 10, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
     ArrayList<Item> items;
     ListView mainListView;
     ImageButton sendBotton;
     ListViewAdapter adapter;
+    MediaPlayer mMediaPlayer;
     Item myItems;
     //endregion
 
@@ -88,12 +95,14 @@ public class MainActivity extends AppCompatActivity {
         mNotifreg = new myVolley(this);
         mSetNotifCTX = new myVolley(this);
         mSetChat = new myVolley(this);
+        mGetChats = new myVolley(this);
         myConfigs = new Config();
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
         mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
         mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
         mSetChatTimer = new esTimer(new Runnable() {public void run() {sendChatToServerCheck();}}, 10, 1000, false);
+        mGetChatsTimer = new esTimer(new Runnable() {public void run() {getChatsRequestCheck();}}, 10, 1000, false);
         //endregion
 
         //region findViewById
@@ -136,10 +145,12 @@ public class MainActivity extends AppCompatActivity {
         //region defualt values
         menu_stat = false;
         periodPerocess = false;
+        chatgetPerocess = false;
         notifCTS = "";
         cmdCTS = "";
         mainLoopTry = 0;
-        mCounterSendchat=0;
+        mCounterSendchat = 0;
+        mCounterGetchat = 0;
         //endregion
 
         //region setOnClickListeners
@@ -155,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                setChatToListView(myName, txtChatForSend.getText().toString());
+                //setChatToListView(myName, txtChatForSend.getText().toString());
                 sendChatToServer(txtChatForSend.getText().toString());
                 sendBotton.setEnabled(false);
                 sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.gray));
@@ -165,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
         //region Auto login
         if(!isNetworkAvailable(getApplication())){
-            dialogMsg.setText("No Internet. please check your data or wifi");
+            dialogMsg.setText(getString(R.string.lng_error1));
             dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
             dlgPage.setVisibility(View.VISIBLE);
         }
@@ -224,6 +235,9 @@ public class MainActivity extends AppCompatActivity {
 //            popup.getMenuInflater().inflate(R.menu.eandroid_menu, popup.getMenu());
 //            popup.show();
             return true;
+        }else if(item.getItemId()==R.id.menu_sendloc){
+            playAlarmSound();
+            return true;
         }else{
             return super.onOptionsItemSelected(item);
         }
@@ -268,6 +282,8 @@ public class MainActivity extends AppCompatActivity {
         mSetNotifCTX.setStarterUrl("https://www.ourartag.com/setp.php?liivx=");
         mSetChat.setmyID(myID);
         mSetChat.setStarterUrl("https://www.ourartag.com/setchat.php?liivx=");
+        mGetChats.setmyID(myID);
+        mGetChats.setStarterUrl("https://www.ourartag.com/getchats.php?liivx=");
         mainTimer.startTimer();
         menu_stat = true;
         invalidateOptionsMenu();
@@ -290,7 +306,16 @@ public class MainActivity extends AppCompatActivity {
                 Typeface.NORMAL));
         adapter.notifyDataSetChanged();
     }
+    public void removeAllItemsFromListview(){
+        items.clear();
+        adapter.notifyDataSetChanged();
+    }
 
+    public void playAlarmSound()  {
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+        mp.start();
+    }
 
     //endregion
 
@@ -304,8 +329,16 @@ public class MainActivity extends AppCompatActivity {
         }else {
             mainLoopTry++;
             mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
-            mainAppStatus.setText("Server response timeout. check internet");
+            mainAppStatus.setText(getString(R.string.lng_mainStatus_txt1));
         }
+
+        if(!chatgetPerocess){
+            getChatsRequest();
+        }else{
+
+        }
+
+
     }
     private void mLivelogResponseCheck(){
         if(mLivelog.get_isSingleRequestAns() && !mLivelog.get_ansSingleRequest().isEmpty()){
@@ -314,19 +347,19 @@ public class MainActivity extends AppCompatActivity {
             String isOk = mLivelog.get_ansSingleRequest();
             if(isOk.equals("sq")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
-                mainAppStatus.setText("Poor connection. Internet is weak.");
+                mainAppStatus.setText(getString(R.string.lng_mainStatus_txt2));
                 Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sq END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
                 mainTimer.stopTimer();
                 mainTimer.startTimer();
             }else if(isOk.equals("er")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
-                mainAppStatus.setText("Server said Error in its response.");
+                mainAppStatus.setText(getString(R.string.lng_mainStatus_txt3));
                 Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ er END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
             }else if(isOk.equals("11") || isOk.equals("00") || isOk.equals("10") || isOk.equals("01")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
-                mainAppStatus.setText("Connection OK, you are Online");
+                mainAppStatus.setText(getString(R.string.lng_mainStatus_txt4));
                 notifCTS = isOk.substring(1);
                 cmdCTS = isOk.substring(0,1);
                 if(notifCTS.equals("1")){
@@ -343,6 +376,8 @@ public class MainActivity extends AppCompatActivity {
             mLivelog.set_isSingleRequestAns(false);
         }
     }
+
+
     private void getNotif(){
         Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifreg.singleRequest~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mNotifreg.singleRequest(180);
@@ -380,6 +415,8 @@ public class MainActivity extends AppCompatActivity {
             mNotifreg.set_isSingleRequestAns(false);
         }
     }
+
+
     private void setNotifCTXf(){
         Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mSetNotifCTX.setParams("p1","v1", "p2", "v2");
@@ -410,8 +447,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void sendChatToServer(String txtMessage) {
-        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mSetChat.send1Params~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
         mSetChat.setParams("msg","", "", "");
         mSetChat.setValues(txtMessage, "", "", "");
         mSetChat.send1Params(2);
@@ -428,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
                 sendBotton.setEnabled(true);
                 txtChatForSend.setText("");
                 sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.blue));
-                dialogMsg.setText("Your Message sent successfully");
+                dialogMsg.setText(getString(R.string.lng_msg1));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
             }else{
                 Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chat Fail~~~~~~~~~~~~~~~~~~try(" + String.valueOf(mCounterSendchat) + ")~~~~~~~~ ");
@@ -439,7 +477,7 @@ public class MainActivity extends AppCompatActivity {
                 if(mCounterSendchat>TRY_T0_SEND_CHAT){
                     sendBotton.setEnabled(true);
                     sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.blue));
-                    dialogMsg.setText("Sending Message Fail. No internet");
+                    dialogMsg.setText(getString(R.string.lng_error2));
                     dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 }
 
@@ -448,5 +486,65 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //endregion
+
+    private void getChatsRequest(){
+        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mGetChats.singleRequest~~~~~~~~~~~~~~~~~~~~~~~~");
+        mGetChats.singleRequest(2068);
+        mGetChatsTimer.startTimer();
+        chatgetPerocess = true;
+    }
+    private void getChatsRequestCheck(){
+        if(mGetChats.get_isSingleRequestAns() && !mGetChats.get_ansSingleRequest().isEmpty()){
+
+            mGetChatsTimer.stopTimer();
+            String completeresp = mGetChats.get_ansSingleRequest();
+            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~completeresp: " + completeresp);
+            String aslStr = "";
+            String strttem = completeresp.substring(0,53);
+            strttem = strttem.substring(47);
+            String isOk = strttem.substring(0,2);
+            //int numberofe =Integer.valueOf(strttem.substring(2));
+            if(isOk.equals("ok")){
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get chat ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
+                int b = completeresp.indexOf("</body>") ;
+                aslStr = completeresp.substring(53, b);
+                String[] echitems = aslStr.split(";");
+                int ii=0, hh=0;
+                String tempstrName, tempstrMsg;
+                removeAllItemsFromListview();
+                for(ii=(echitems.length-1);ii>=0;ii--){
+                    hh = echitems[ii].indexOf(">");
+                    tempstrName = echitems[ii].substring(0,hh);
+                    tempstrMsg = echitems[ii].substring(hh+1);
+                    setChatToListView(tempstrName, tempstrMsg);
+
+
+                }
+                chatgetPerocess = false;
+            }else{
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get chat Fail~~~~~~~~~~~~~~~~~~try(" + String.valueOf(mCounterGetchat) + ")~~~~~~~~ ");
+                mCounterGetchat++;
+                if(mCounterGetchat>65000){
+                    mCounterGetchat = 0;
+                }
+                chatgetPerocess = false;
+            }
+
+
+        }
+
+    }
+
+
+//endregion
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Toast.makeText(mContext, "کجا میخوای بری؟ بخدا اگه بزارم!! شما مهمانید", Toast.LENGTH_LONG).show();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
 }

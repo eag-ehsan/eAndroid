@@ -2,8 +2,10 @@ package com.ourartag.eandroid;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,13 +56,22 @@ public class ListViewAdapter extends ArrayAdapter<Item> {
         TextView mmsg = listItem.findViewById(R.id.mainMessages);
         mmsg.setBackgroundColor(currentItem.getbgColor_m());
         title.setTextColor(currentItem.gettxtColor_t());
-        title.setText(currentItem.getTitle());
+
         title.setMinLines(currentItem.getlineNumber_t());
         DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
         float dp = currentItem.gettxtSize_dp_t();
-        float fpixels = metrics.density * dp;
+        Resources r = getContext().getResources();
+        float px = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                r.getDisplayMetrics()
+        );
+        float fpixels = px;
+        fpixels = metrics.density * dp;
         int pixels = (int) (fpixels + 0.5f);
-        title.setTextSize(pixels);
+        //pixels = convertDpToPixel(dp, getContext());
+        title.setTextSize( pixels);
+        title.setText(currentItem.getTitle());
         title.setTypeface(null, currentItem.gettxtStyle_t());
 
         mmsg.setTextColor(currentItem.gettxtColor_m());
@@ -77,4 +88,18 @@ public class ListViewAdapter extends ArrayAdapter<Item> {
         return listItem;
     }
 
+    public static float convertDpToPixel(float dp, Context context){
+        return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
+    /**
+     * This method converts device specific pixels to density independent pixels.
+     *
+     * @param px A value in px (pixels) unit. Which we need to convert into db
+     * @param context Context to get resources and device specific display metrics
+     * @return A float value to represent dp equivalent to px value
+     */
+    public static float convertPixelsToDp(float px, Context context){
+        return px / ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
 }
