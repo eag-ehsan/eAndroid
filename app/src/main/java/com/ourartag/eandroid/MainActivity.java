@@ -14,6 +14,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -26,10 +27,17 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,6 +60,11 @@ public class MainActivity extends AppCompatActivity {
     MenuItem about_menu, logout_menu;
     Boolean menu_stat, periodPerocess;
     int MAIN_LOOP_SEC = 10, mainLoopTry;
+    //String[] mainListArray = {"Android","IPhone"};
+    ArrayList<String> mainListArray=new ArrayList<String>();
+    ArrayList<Item> items;
+    ListView mainListView;
+    ImageButton sendBotton;
     //endregion
 
     @Override
@@ -85,8 +98,67 @@ public class MainActivity extends AppCompatActivity {
         dlgOk = findViewById(R.id.dialogOK);
         mainAppStatus = findViewById(R.id.mainAppStatus);
         textViewRespoNotif = findViewById(R.id.txtResponotif);
+        mainListView = findViewById(R.id.main_list);
+        sendBotton = findViewById(R.id.sendBtn);
         //endregion
+        //ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, mainListArray);
+        //mainListView.setAdapter(adapter);
+        items = new ArrayList<>();
+        items.add(new Item(R.drawable.d1,
+                "Ehsan Jan","Dori hastam dar khedmatam ",
+                true,
+                ContextCompat.getColor(getContext(), R.color.dark_bg6),
+                ContextCompat.getColor(getContext(), R.color.light_text2),
+                1,
+                10f,
+                Typeface.BOLD,
+                ContextCompat.getColor(getContext(), R.color.light_bg2),
+                ContextCompat.getColor(getContext(), R.color.black),
+                3,
+                9f,
+                Typeface.NORMAL));
+        items.add(new Item(R.drawable.d1,
+                "Habibeh","Bacheha  ",
+                true,
+                ContextCompat.getColor(getContext(), R.color.dark_bg6),
+                ContextCompat.getColor(getContext(), R.color.light_text2),
+                1,
+                10f,
+                Typeface.BOLD,
+                ContextCompat.getColor(getContext(), R.color.light_bg2),
+                ContextCompat.getColor(getContext(), R.color.black),
+                3,
+                9f,
+                Typeface.NORMAL));
+        items.add(new Item(R.drawable.d1,
+                "درسا جان","سلام به همگی",
+                true,
+                ContextCompat.getColor(getContext(), R.color.dark_bg6),
+                ContextCompat.getColor(getContext(), R.color.light_text2),
+                1,
+                10f,
+                Typeface.BOLD,
+                ContextCompat.getColor(getContext(), R.color.light_bg2),
+                ContextCompat.getColor(getContext(), R.color.black),
+                3,
+                9f,
+                Typeface.NORMAL));
 
+
+
+        ListViewAdapter adapter = new ListViewAdapter(this, items);
+
+        mainListView.setAdapter(adapter);
+        mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                // TODO Auto-generated method stub
+
+                //mainListArray.remove(position);
+                items.remove(position);
+                adapter.notifyDataSetChanged();
+            }
+        });
         //region Configs
         sharedPref = mContext.getSharedPreferences("ourartag.com", Context.MODE_PRIVATE);
         mEditor = sharedPref.edit();
@@ -113,7 +185,15 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        sendBotton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
+                mainListArray.add("goox");
+                adapter.notifyDataSetChanged();
+
+            }
+        });
         //endregion
 
         //region Auto login
