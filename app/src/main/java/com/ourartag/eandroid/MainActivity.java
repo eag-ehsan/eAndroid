@@ -50,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
     Config myConfigs;
     LinearLayout dlgPage;
     MenuItem about_menu, logout_menu;
-    Boolean menu_stat;
-    int MAIN_LOOP_SEC = 10;
+    Boolean menu_stat, periodPerocess;
+    int MAIN_LOOP_SEC = 10, mainLoopTry;
     //endregion
 
     @Override
@@ -72,10 +72,10 @@ public class MainActivity extends AppCompatActivity {
         mNotifreg = new myVolley(this);
         mSetNotifCTX = new myVolley(this);
         myConfigs = new Config();
-        mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 1000 * MAIN_LOOP_SEC, false);
-        mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 1000, false);
-        mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 1000, false);
-        mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 1000, false);
+        mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
+        mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
+        mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
+        mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
         //endregion
 
         //region findViewById
@@ -98,8 +98,10 @@ public class MainActivity extends AppCompatActivity {
 
         //region defualt values
         menu_stat = false;
+        periodPerocess = false;
         notifCTS = "";
         cmdCTS = "";
+        mainLoopTry = 0;
         //endregion
 
         //region setOnClickListeners
@@ -225,25 +227,34 @@ public class MainActivity extends AppCompatActivity {
 
     //region private methods
     private void mainLoop(){
-        Log.i("oooooooooooo", "++++++++++++++++++livelog is " + mLivelogTimer.isTimerOn().toString() + " ++++++++++++++++++++++++++++++mainLoop");
-        if(!mLivelogTimer.isTimerOn()){
+        Log.i("oooooooooooo", "++++++++++++++++++periodPerocess is " + periodPerocess + " ++++++++++++++++++++++++++++++mainLoop");
+        if(!periodPerocess){
+            mainLoopTry = 0;
             mLivelog.singleRequest(2);
             mLivelogTimer.startTimer();
         }else {
+            mainLoopTry++;
             mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
             mainAppStatus.setText("Server response timeout. check internet");
         }
     }
     private void mLivelogResponseCheck(){
-        if(mLivelog.get_isSingleRequestAns()){
+        if(mLivelog.get_isSingleRequestAns() && !mLivelog.get_ansSingleRequest().isEmpty()){
+            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~mLivelogTimer.stopTimer()~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            mLivelogTimer.stopTimer();
             String isOk = mLivelog.get_ansSingleRequest();
-
             if(isOk.equals("sq")){
-                mLivelog.singleRequest(2);
+                mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
+                mainAppStatus.setText("Poor connection. Internet is weak.");
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sq END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                periodPerocess = false;
+                mainTimer.stopTimer();
+                mainTimer.startTimer();
             }else if(isOk.equals("er")){
-                mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
+                mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText("Server said Error in its response.");
-                mLivelogTimer.stopTimer();
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ er END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                periodPerocess = false;
             }else if(isOk.equals("11") || isOk.equals("00") || isOk.equals("10") || isOk.equals("01")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 mainAppStatus.setText("Connection OK, you are Online");
@@ -251,55 +262,82 @@ public class MainActivity extends AppCompatActivity {
                 cmdCTS = isOk.substring(0,1);
                 if(notifCTS.equals("1")){
                     getNotif();
+                }else{
+                    Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ done END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                    periodPerocess = false;
                 }
 
-                mLivelogTimer.stopTimer();
+
             }else{
 
             }
+            mLivelog.set_isSingleRequestAns(false);
         }
     }
     private void getNotif(){
+        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifreg.singleRequest~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mNotifreg.singleRequest(180);
         mNotifregTimer.startTimer();
     }
     private void getNotifCheck(){
-        if(mNotifreg.get_isSingleRequestAns()){
+        if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
+            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifregTimer.stopTimer~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            mNotifregTimer.stopTimer();
             String respo = mNotifreg.get_ansSingleRequest();
             String isOk = respo.substring(0,6);
-            if(isOk.equals("cancel")){
-                mNotifregTimer.stopTimer();
+            if(isOk.equals("sqErro")){
+                long templng1 = mainTimer.getCurrentDuration();
+                if(templng1<((1000*MAIN_LOOP_SEC)/2)){
+                    Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~sqErro -> getNotif() ~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                    getNotif();
+                }else{
+                    Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sqErro -> END~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                    periodPerocess = false;
+                }
+            }else if(isOk.equals("cancel")){
+                periodPerocess = false;
             }else if(isOk.equals("error!")){
-                mNotifregTimer.stopTimer();
-                getNotif();
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifreg error! END~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                periodPerocess = false;
+                
             }else if(isOk.equals("<html>")){
-                mNotifregTimer.stopTimer();
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<html>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 String responotif = respo.substring(53);
                 textViewRespoNotif.setText(responotif);
                 setNotifCTXf();
             }else{
 
             }
+            mNotifreg.set_isSingleRequestAns(false);
         }
     }
     private void setNotifCTXf(){
+        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mSetNotifCTX.setParams("p1","v1", "p2", "v2");
         mSetNotifCTX.setValues("notifCTS", "0", "notifCTR", "1");
         mSetNotifCTX.send4Params(2);
         mSetNotifCTXTimer.startTimer();
     }
     private void setNotifCTXcheck(){
-        if(mSetNotifCTX.get_isSend4ParamAns()){
+        if(mSetNotifCTX.get_isSend4ParamAns() && !mSetNotifCTX.get_ansSend4Param().isEmpty()){
+            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.stopTimer~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            mNotifregTimer.stopTimer();
             String isOk = mSetNotifCTX.get_ansSend4Param();
             if(isOk.equals("ok")){
-                mNotifregTimer.stopTimer();
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ok END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                periodPerocess = false;
 
+            }else if(isOk.equals("p4")){
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. p4 END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                periodPerocess = false;
             }else if(isOk.equals("er")){
-                mNotifregTimer.stopTimer();
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. er END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                periodPerocess = false;
 
             }else{
-
+                periodPerocess = false;
             }
+            mSetNotifCTX.set_isSend4ParamAns(false);
         }
     }
     //endregion

@@ -140,8 +140,10 @@
             android:id="@+id/mainAppStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/header_footer_bg"
             android:text="Welcome to our community. you are one of us now"
             android:textAlignment="center"
+            android:textColor="@color/white"
             android:textSize="16sp" />
 
 
@@ -219,7 +221,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.05"
-            android:background="#2C0F01"
+            android:background="@color/header_footer_bg"
             android:gravity="center"
             android:orientation="horizontal">
 

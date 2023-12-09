@@ -126,7 +126,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 signupBtn.setText("Wait for response");
                 signupBtn.setEnabled(false);
 
-                timer1000 = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 1000, true);
+                timer1000 = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 10, 1000, true);
             }
 
         }
@@ -167,7 +167,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 loginBtn.setEnabled(false);
                 signupBtn.setText("Wait for response");
                 signupBtn.setEnabled(false);
-                timer1001 = new esTimer(new Runnable() {public void run() {usrSignupCheck();}}, 1000, true);
+                timer1001 = new esTimer(new Runnable() {public void run() {usrSignupCheck();}}, 10, 1000, true);
             }
 
 

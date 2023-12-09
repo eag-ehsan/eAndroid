@@ -103,6 +103,7 @@ public class myVolley {
     }
     public void set_isSingleRequestAns(Boolean vvv){
         isSingleRequestAns = vvv;
+        ansSingleRequest = "";
     }
     public String get_ansSingleRequest(){
         return ansSingleRequest;
@@ -144,6 +145,7 @@ public class myVolley {
     }
     public void set_isSend2ParamAns(Boolean vvv){
         isSend2ParamAns = vvv;
+        ansSend2Param = "";
     }
     public String get_ansSend2Param(){
         return ansSend2Param;
@@ -167,7 +169,7 @@ public class myVolley {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                String tempSingleReq = "p2Error";
+                String tempSingleReq = "p4Error";
                 if(tempSingleReq.length()>outLenght){
                     ansSend4Param = tempSingleReq.substring(0, outLenght);
                 }else{
@@ -184,6 +186,7 @@ public class myVolley {
     }
     public void set_isSend4ParamAns(Boolean vvv){
         isSend4ParamAns = vvv;
+        ansSend4Param = "";
     }
     public String get_ansSend4Param(){
         return ansSend4Param;

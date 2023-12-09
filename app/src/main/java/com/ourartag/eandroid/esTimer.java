@@ -3,13 +3,15 @@ import android.os.Handler;
 public class esTimer {
     private Handler handler;
     private boolean paused;
-
+    private long startTime, durationtime;
     private int interval;
-    public esTimer (Runnable runnable, int interval, boolean started) {
+    private int startval;
+    public esTimer (Runnable runnable, int startv, int interv, boolean started) {
         paused = true;
         handler = new Handler ();
         this.runnable = runnable;
-        this.interval = interval;
+        this.interval = interv;
+        this.startval = startv;
         if (started)
             startTimer ();
     }
@@ -17,7 +19,9 @@ public class esTimer {
         @Override
         public void run() {
             if (!paused) {
+                startTime = System.currentTimeMillis();
                 runnable.run ();
+
                 esTimer.this.handler.postDelayed (this, interval);
             }
         }
@@ -28,18 +32,24 @@ public class esTimer {
     public int getInterval() {
         return interval;
     }
-
+    public long getCurrentDuration() {
+        durationtime = System.currentTimeMillis() - startTime;
+        return durationtime;
+    }
     public void setInterval(int interval) {
         this.interval = interval;
     }
 
     public void startTimer () {
         paused = false;
-        handler.postDelayed (task, interval);
+        startTime = System.currentTimeMillis();
+        handler.postDelayed (task, startval);
     }
 
     public void stopTimer () {
         paused = true;
+        handler.removeCallbacks(task);
+        handler.removeCallbacksAndMessages(null);
     }
 
     public Boolean isTimerOn(){
