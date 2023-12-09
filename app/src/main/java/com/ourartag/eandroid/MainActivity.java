@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -47,11 +48,11 @@ public class MainActivity extends AppCompatActivity {
         return mContext;
     }
     Toolbar mToolbar;
-    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif;
+    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend;
     FragmentContainerView myFrag1;
-    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer;
+    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer;
     String myID, myName, notifCTS, cmdCTS;
-    myVolley mLivelog, mNotifreg, mSetNotifCTX;
+    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat;
     Button btn1, dlgOk;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
@@ -59,12 +60,14 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout dlgPage;
     MenuItem about_menu, logout_menu;
     Boolean menu_stat, periodPerocess;
-    int MAIN_LOOP_SEC = 10, mainLoopTry;
+    int MAIN_LOOP_SEC = 10, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
     ArrayList<Item> items;
     ListView mainListView;
     ImageButton sendBotton;
+    ListViewAdapter adapter;
+    Item myItems;
     //endregion
 
     @Override
@@ -84,11 +87,13 @@ public class MainActivity extends AppCompatActivity {
         mLivelog = new myVolley(this);
         mNotifreg = new myVolley(this);
         mSetNotifCTX = new myVolley(this);
+        mSetChat = new myVolley(this);
         myConfigs = new Config();
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
         mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
         mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
+        mSetChatTimer = new esTimer(new Runnable() {public void run() {sendChatToServerCheck();}}, 10, 1000, false);
         //endregion
 
         //region findViewById
@@ -100,62 +105,22 @@ public class MainActivity extends AppCompatActivity {
         textViewRespoNotif = findViewById(R.id.txtResponotif);
         mainListView = findViewById(R.id.main_list);
         sendBotton = findViewById(R.id.sendBtn);
+        txtChatForSend = findViewById(R.id.txtChatToSend);
         //endregion
         //ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, mainListArray);
         //mainListView.setAdapter(adapter);
         items = new ArrayList<>();
-        items.add(new Item(R.drawable.d1,
-                "Ehsan Jan","Dori hastam dar khedmatam ",
-                true,
-                ContextCompat.getColor(getContext(), R.color.dark_bg6),
-                ContextCompat.getColor(getContext(), R.color.light_text2),
-                1,
-                10f,
-                Typeface.BOLD,
-                ContextCompat.getColor(getContext(), R.color.light_bg2),
-                ContextCompat.getColor(getContext(), R.color.black),
-                3,
-                9f,
-                Typeface.NORMAL));
-        items.add(new Item(R.drawable.d1,
-                "Habibeh","Bacheha  ",
-                true,
-                ContextCompat.getColor(getContext(), R.color.dark_bg6),
-                ContextCompat.getColor(getContext(), R.color.light_text2),
-                1,
-                10f,
-                Typeface.BOLD,
-                ContextCompat.getColor(getContext(), R.color.light_bg2),
-                ContextCompat.getColor(getContext(), R.color.black),
-                3,
-                9f,
-                Typeface.NORMAL));
-        items.add(new Item(R.drawable.d1,
-                "درسا جان","سلام به همگی",
-                true,
-                ContextCompat.getColor(getContext(), R.color.dark_bg6),
-                ContextCompat.getColor(getContext(), R.color.light_text2),
-                1,
-                10f,
-                Typeface.BOLD,
-                ContextCompat.getColor(getContext(), R.color.light_bg2),
-                ContextCompat.getColor(getContext(), R.color.black),
-                3,
-                9f,
-                Typeface.NORMAL));
-
-
-
-        ListViewAdapter adapter = new ListViewAdapter(this, items);
-
+        adapter = new ListViewAdapter(this, items);
         mainListView.setAdapter(adapter);
         mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 // TODO Auto-generated method stub
 
-                //mainListArray.remove(position);
+
+
                 items.remove(position);
+
                 adapter.notifyDataSetChanged();
             }
         });
@@ -174,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
         notifCTS = "";
         cmdCTS = "";
         mainLoopTry = 0;
+        mCounterSendchat=0;
         //endregion
 
         //region setOnClickListeners
@@ -189,9 +155,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                mainListArray.add("goox");
-                adapter.notifyDataSetChanged();
-
+                setChatToListView(myName, txtChatForSend.getText().toString());
+                sendChatToServer(txtChatForSend.getText().toString());
+                sendBotton.setEnabled(false);
+                sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.gray));
             }
         });
         //endregion
@@ -299,10 +266,32 @@ public class MainActivity extends AppCompatActivity {
         mNotifreg.setStarterUrl("https://www.ourartag.com/reqnotif.php?liivx=");
         mSetNotifCTX.setmyID(myID);
         mSetNotifCTX.setStarterUrl("https://www.ourartag.com/setp.php?liivx=");
+        mSetChat.setmyID(myID);
+        mSetChat.setStarterUrl("https://www.ourartag.com/setchat.php?liivx=");
         mainTimer.startTimer();
         menu_stat = true;
         invalidateOptionsMenu();
     }
+
+    public void setChatToListView(String txtTitle, String txtMessage) {
+
+        items.add(new Item(R.drawable.d3,
+                txtTitle,txtMessage,
+                true,
+                ContextCompat.getColor(getContext(), R.color.dark_bg6),
+                ContextCompat.getColor(getContext(), R.color.light_text2),
+                1,
+                7f,
+                Typeface.BOLD,
+                ContextCompat.getColor(getContext(), R.color.light_bg2),
+                ContextCompat.getColor(getContext(), R.color.black),
+                3,
+                7.5f,
+                Typeface.NORMAL));
+        adapter.notifyDataSetChanged();
+    }
+
+
     //endregion
 
     //region private methods
@@ -392,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void setNotifCTXf(){
-        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mSetNotifCTX.setParams("p1","v1", "p2", "v2");
         mSetNotifCTX.setValues("notifCTS", "0", "notifCTR", "1");
         mSetNotifCTX.send4Params(2);
@@ -400,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void setNotifCTXcheck(){
         if(mSetNotifCTX.get_isSend4ParamAns() && !mSetNotifCTX.get_ansSend4Param().isEmpty()){
-            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.stopTimer~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.stopTimer~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
             mNotifregTimer.stopTimer();
             String isOk = mSetNotifCTX.get_ansSend4Param();
             if(isOk.equals("ok")){
@@ -408,10 +397,10 @@ public class MainActivity extends AppCompatActivity {
                 periodPerocess = false;
 
             }else if(isOk.equals("p4")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. p4 END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. p4 END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
             }else if(isOk.equals("er")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. er END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ")try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. er END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
 
             }else{
@@ -420,5 +409,44 @@ public class MainActivity extends AppCompatActivity {
             mSetNotifCTX.set_isSend4ParamAns(false);
         }
     }
+
+    private void sendChatToServer(String txtMessage) {
+        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+        mSetChat.setParams("msg","", "", "");
+        mSetChat.setValues(txtMessage, "", "", "");
+        mSetChat.send1Params(2);
+        mSetChatTimer.startTimer();
+    }
+    private void sendChatToServerCheck(){
+        if(mSetChat.get_isSend1ParamAns() && !mSetChat.get_ansSend1Param().isEmpty()){
+            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mSetChat.stopTimer~`~~~~~~~~~~~~~~~~~~~~~~~~~~~ delay: " + Math.floor(mSetChatTimer.getCurrentDuration()));
+            mSetChatTimer.stopTimer();
+            String isOk = mSetChat.get_ansSend1Param();
+            if(isOk.equals("ok")){
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chat ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
+                mSetChat.set_isSend1ParamAns(false);
+                sendBotton.setEnabled(true);
+                txtChatForSend.setText("");
+                sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.blue));
+                dialogMsg.setText("Your Message sent successfully");
+                dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
+            }else{
+                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chat Fail~~~~~~~~~~~~~~~~~~try(" + String.valueOf(mCounterSendchat) + ")~~~~~~~~ ");
+                mSetChat.set_isSend1ParamAns(false);
+                mSetChat.send1Params(2);
+                mSetChatTimer.startTimer();
+                mCounterSendchat++;
+                if(mCounterSendchat>TRY_T0_SEND_CHAT){
+                    sendBotton.setEnabled(true);
+                    sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.blue));
+                    dialogMsg.setText("Sending Message Fail. No internet");
+                    dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
+                }
+
+            }
+
+        }
+    }
+
     //endregion
 }

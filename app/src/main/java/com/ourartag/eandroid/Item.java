@@ -90,4 +90,9 @@ class Item {
         return mTxtStyle_m;
     }
 
+
+    void setMessage(String newmsgg){
+        mMaintext = newmsgg;
+    }
+
 }

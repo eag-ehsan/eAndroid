@@ -16,8 +16,8 @@ public class myVolley {
     private StringRequest stringRequest;
     private String myID, myStartUrl;
     private String mParam1, mParam2, mParam3, mParam4, mValue1, mValue2, mValue3, mValue4;
-    private Boolean isSingleRequestAns, isSend2ParamAns, isSend4ParamAns;
-    private String ansSingleRequest, ansSend2Param, ansSend4Param;
+    private Boolean isSingleRequestAns, isSend1ParamAns, isSend2ParamAns, isSend4ParamAns;
+    private String ansSingleRequest, ansSend1Param, ansSend2Param, ansSend4Param;
 
     public myVolley(Context context){
         // startUrl = "https://www.ourartag.com/live.php?liivx="
@@ -26,6 +26,8 @@ public class myVolley {
         ansSingleRequest = "";
         isSend2ParamAns = false;
         ansSend2Param = "";
+        isSend1ParamAns = false;
+        ansSend1Param = "";
         isSend4ParamAns = false;
         ansSend4Param = "";
         queue = Volley.newRequestQueue(context.getApplicationContext());
@@ -108,6 +110,49 @@ public class myVolley {
     public String get_ansSingleRequest(){
         return ansSingleRequest;
     }
+
+
+
+
+
+
+
+    public void send1Params(int outLenght) {
+        String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1;
+        Log.i("send1Params", "---------------url: " + uurl);
+
+        StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
+                response -> {
+                    String resp = response.substring(0, outLenght);
+                    ansSend1Param = resp;
+                    isSend1ParamAns = true;
+                    Log.i("send1Params", "-------------------------------------------out: " + ansSend1Param);
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                String tempSingleReq = "p1Error";
+                if(tempSingleReq.length()>outLenght){
+                    ansSend1Param = tempSingleReq.substring(0, outLenght);
+                }else{
+                    ansSend1Param = tempSingleReq;
+                }
+                Log.i("send1Params", "-------------------------------------------out: " + ansSend1Param);
+                isSend1ParamAns = true;
+            }
+        });
+        queue.add(stringR);
+    }
+    public Boolean get_isSend1ParamAns(){
+        return isSend1ParamAns;
+    }
+    public void set_isSend1ParamAns(Boolean vvv){
+        isSend1ParamAns = vvv;
+        ansSend1Param = "";
+    }
+    public String get_ansSend1Param(){
+        return ansSend1Param;
+    }
+
 
 
 
