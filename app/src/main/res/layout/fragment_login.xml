@@ -38,6 +38,7 @@
 
                 <TextView
                     android:id="@+id/vtxtDialogMsgLogin"
+                    style="@style/Vazir"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Error Messages"
@@ -49,9 +50,11 @@
 
                 <Button
                     android:id="@+id/dialogOK"
+                    style="@style/Titr"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/lng_OK" />
+                    android:text="@string/lng_OK"
+                    android:textSize="20sp" />
             </LinearLayout>
 
             <Space
@@ -62,6 +65,7 @@
 
         <TextView
             android:id="@+id/textView"
+            style="@style/Titr"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:forceDarkAllowed="true"
@@ -100,6 +104,7 @@
 
                     <EditText
                         android:id="@+id/txtNameLogin"
+                        style="@style/Vazir"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ems="10"
@@ -109,6 +114,7 @@
 
                     <EditText
                         android:id="@+id/txtPassLogin"
+                        style="@style/Vazir"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ems="10"
@@ -118,6 +124,7 @@
 
                     <Button
                         android:id="@+id/btnLogin"
+                        style="@style/Titr"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/lng_Login" />
@@ -140,6 +147,7 @@
 
                     <EditText
                         android:id="@+id/txtNameSignup"
+                        style="@style/Vazir"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ems="10"
@@ -149,6 +157,7 @@
 
                     <EditText
                         android:id="@+id/txtPassSignup"
+                        style="@style/Vazir"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ems="10"
@@ -158,6 +167,7 @@
 
                     <Button
                         android:id="@+id/btnSignup"
+                        style="@style/Titr"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/lng_Signup" />
@@ -183,67 +193,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/please_wait_for_login_id"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/dark_bg3"
-        android:gravity="center_horizontal|top"
-        android:orientation="vertical"
-        android:visibility="gone">
 
-        <ImageView
-            android:id="@+id/imageView3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:src="@tools:sample/avatars"
-            app:srcCompat="@drawable/d4" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/imageView2"
-                android:layout_width="40dp"
-                android:layout_height="70dp"
-                android:src="@tools:sample/avatars"
-                app:srcCompat="@drawable/address_card_20" />
-
-            <TextView
-                android:id="@+id/textView11"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="6dp"
-                android:layout_weight="1"
-                android:text="@string/lng_login_txt11"
-                android:textColor="@color/light_text2"
-                android:textSize="24sp" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/username_please_wait_login"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:text="TextView"
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="27dp"
-            android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/imageView4"
-            android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:layout_marginTop="15dp
-"
-            android:src="@tools:sample/avatars"
-            app:srcCompat="@drawable/hourglass_clock" />
-
-    </LinearLayout>
 
 </FrameLayout>

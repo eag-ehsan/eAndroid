@@ -15,6 +15,7 @@
 
         <TextView
             android:id="@+id/textView9"
+            style="@style/Titr"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/dark_bg4"
@@ -34,12 +35,18 @@
 
             <Switch
                 android:id="@+id/setting_bg_service"
-                android:layout_width="wrap_content"
+                style="@style/Vazir"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="35dp"
+
+                android:layout_marginRight="20dp"
+                android:switchMinWidth="56dp"
                 android:text="@string/lng_backgroundservice"
-                android:textSize="18sp"
-                tools:ignore="TouchTargetSizeCheck" />
+                android:textOff="@string/lng_off"
+                android:textOn="@string/lng_on"
+                android:textSize="18sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -51,6 +58,7 @@
 
             <TextView
                 android:id="@+id/textView10"
+                style="@style/Titr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="12"
@@ -80,6 +88,7 @@
 
             <Button
                 android:id="@+id/setting_cancel_btn"
+                style="@style/Vazir"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="40"
@@ -87,6 +96,7 @@
 
             <Button
                 android:id="@+id/setting_save_btn"
+                style="@style/Vazir"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="40"

@@ -1,16 +1,20 @@
 package com.ourartag.eandroid;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -29,6 +33,7 @@ public class Mysetting extends Fragment implements View.OnClickListener {
     private String mParam2, myServerAddress;
     private Button btnSetting_Save, btnSetting_Cancel;
     private View view;
+    private Switch sw;
     Config myConfigs;
     EditText serverAsTSave;
 
@@ -76,6 +81,33 @@ public class Mysetting extends Fragment implements View.OnClickListener {
         btnSetting_Cancel.setOnClickListener(this);
         serverAsTSave = (EditText) view.findViewById(R.id.setting_server_address_id);
         serverAsTSave.setText(myServerAddress);
+        sw = (Switch) view.findViewById(R.id.setting_bg_service);
+
+
+//        if(myConfigs.get("bgService","").equals("on")){
+//            sw.setChecked(true);
+//        }else{
+//            sw.setChecked(false);
+//        }
+        if(myConfigs.get("bgService","").equals("on")){
+            sw.setChecked(true);
+        }else{
+            sw.setChecked(false);
+        }
+        sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    myConfigs.set("bgService","on");
+                    //myConfigs.set("isLogin","1");
+                    //Log.i("$$$$$$$$$$$$", "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ isLogin 1");
+                } else {
+                    myConfigs.set("bgService","off");
+                    //myConfigs.set("isLogin","0");
+                    //myConfigs.set("myPass","0");
+                    //Log.i("$$$$$$$$$$$$", "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ isLogin 0");
+                }
+            }
+        });
         // Inflate the layout for this fragment
         return view;
 
@@ -91,7 +123,16 @@ public class Mysetting extends Fragment implements View.OnClickListener {
         }
         if(v.getId()==R.id.setting_save_btn){
             myConfigs.set("myServerAddress",serverAsTSave.getText().toString());
-           System.exit(0);
+            if(myConfigs.get("bgService","off").equals("off")){
+                ((MainActivity)getActivity()).stopMyService();
+            }else{
+                ((MainActivity)getActivity()).sureServiceisStarting();
+            }
+
+            FragmentManager fm = getParentFragmentManager();
+            FragmentTransaction fragmentTransaction = fm.beginTransaction();
+            fragmentTransaction.remove(Mysetting.this).commit();
+            ((MainActivity)getActivity()).turnOffFrag();
         }
     }
 }

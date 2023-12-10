@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="GreenText" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">#00FF00</item>
+    </style>
+    <style name="Yekan" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fontFamily">@font/yekan</item>
+        <item name="fontFamily">@font/yekan</item> <!-- target android sdk versions < 26 and > 14 if theme other than AppCompat -->
+    </style>
+    <style name="Vazir" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fontFamily">@font/vazir</item>
+        <item name="fontFamily">@font/vazir</item> <!-- target android sdk versions < 26 and > 14 if theme other than AppCompat -->
+    </style>
+    <style name="Titr" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fontFamily">@font/titr</item>
+        <item name="fontFamily">@font/titr</item> <!-- target android sdk versions < 26 and > 14 if theme other than AppCompat -->
+    </style>
+</resources>

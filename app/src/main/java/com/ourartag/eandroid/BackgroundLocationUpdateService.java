@@ -56,11 +56,13 @@ public class BackgroundLocationUpdateService  extends Service {
         stoptimertask();
         stopService = false;
 
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction("restartservice");
-        broadcastIntent.setClass(this, Restarter.class);
-        this.sendBroadcast(broadcastIntent);
 
+        if(myConfigs.get("bgService","off").equals("on")){
+            Intent broadcastIntent = new Intent();
+            broadcastIntent.setAction("restartservice");
+            broadcastIntent.setClass(this, Restarter.class);
+            this.sendBroadcast(broadcastIntent);
+        }
 
     }
 
@@ -85,7 +87,8 @@ public class BackgroundLocationUpdateService  extends Service {
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
         mLivelog = new myVolley(this);
         mLivelog.setmyID(myID);
-        mLivelog.setStarterUrl(getString(R.string.site_Address) + "livee.php?liivx=");
+        myServerAddress = myConfigs.get("myServerAddress", "");
+        mLivelog.setStarterUrl(myServerAddress + "livee.php?liivx=");
         periodPerocess = false;
 
     }
@@ -171,6 +174,9 @@ public class BackgroundLocationUpdateService  extends Service {
         myTtimer.startTimer();
     }
     public void runrun(){
+        if(myConfigs.get("bgService","").equals("off")){
+            myTtimer.stopTimer();
+        }
         myMan = sharedPref.getString("man", "");
         Log.i("##########", "####################################" + myMan);
         if(myMan.equals("raftam")){

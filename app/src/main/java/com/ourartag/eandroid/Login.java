@@ -101,6 +101,10 @@ public class Login extends Fragment implements View.OnClickListener{
         dialogMsg = (TextView) view.findViewById(R.id.vtxtDialogMsgLogin);
         resLogin = (TextView) view.findViewById(R.id.vtxtDialogMsg);
         titleLogin = (TextView) view.findViewById(R.id.textView);
+
+
+        txtNameLogin.setText(myConfigs.get("myName",""));
+        txtPassLogin.setText(myConfigs.get("myPass",""));
         return view;
     }
 
@@ -120,7 +124,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 myusr0.setmyID("0");
                 myusr0.setParams("name","pass", "", "");
                 myusr0.setValues(txtNameLogin.getText().toString(), txtPassLogin.getText().toString(), "", "");
-                myusr0.setStarterUrl(getString(R.string.site_Address) + "usr.php?liivx=");
+                myusr0.setStarterUrl(myServerAddress + "usr.php?liivx=");
                 myusr0.send2Params(5);
                 loginBtn.setText(getString(R.string.lng_login_txt7));
                 loginBtn.setEnabled(false);
@@ -162,7 +166,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 myusr0.setmyID("add");
                 myusr0.setParams("name","pass", "", "");
                 myusr0.setValues(txtNameSignup.getText().toString(), txtPassSignup.getText().toString(), "", "");
-                myusr0.setStarterUrl(getString(R.string.site_Address) + "usr.php?liivx=");
+                myusr0.setStarterUrl(myServerAddress + "usr.php?liivx=");
                 myusr0.send2Params(5);
                 loginBtn.setText(getString(R.string.lng_login_txt6));
                 loginBtn.setEnabled(false);
@@ -175,7 +179,7 @@ public class Login extends Fragment implements View.OnClickListener{
         }
     }
     public void usrLoginCheck(){
-        if(myusr0.get_isSend2ParamAns()){
+        if(myusr0.get_isSend2ParamAns() && !myusr0.get_ansSend2Param().isEmpty()){
             String isOk = myusr0.get_ansSend2Param();
             if(isOk.equals("no000")){
                 resLogin.setText(getString(R.string.lng_login_txt6));
@@ -207,21 +211,33 @@ public class Login extends Fragment implements View.OnClickListener{
                 int tmpit = Integer.parseInt(isID);
                 myConfigs.set("myID",tmpit + "");
                 myConfigs.set("myName",txtNameLogin.getText().toString());
+                myConfigs.set("myPass",txtPassLogin.getText().toString());
                 myusr0.set_isSend2ParamAns(false);
                 timer1000.stopTimer();
                 dialogMsg.setText(getString(R.string.lng_login_txt4));
+                myConfigs.set("isLogin","1");
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 loginproc = "lgnok";
                 dlgPage.setVisibility(View.VISIBLE);
 
 
             }else{
-
+                resLogin.setText(getString(R.string.lng_login_txt12));
+                dialogMsg.setText(getString(R.string.lng_login_txt12));
+                dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
+                loginproc = "nousr";
+                dlgPage.setVisibility(View.VISIBLE);
+                myusr0.set_isSend2ParamAns(false);
+                timer1000.stopTimer();
+                loginBtn.setText(getString(R.string.lng_Login));
+                loginBtn.setEnabled(true);
+                signupBtn.setText(getString(R.string.lng_Signup));
+                signupBtn.setEnabled(true);
             }
         }
     }
     public void usrSignupCheck(){
-        if(myusr0.get_isSend2ParamAns()){
+        if(myusr0.get_isSend2ParamAns() && !myusr0.get_ansSend2Param().isEmpty()){
             String isOk = myusr0.get_ansSend2Param();
             if(isOk.equals("ex000")){
                 dialogMsg.setText(txtNameSignup.getText().toString() + " " + getString(R.string.lng_login_txt1));
@@ -246,7 +262,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
 
-            }else if(isOk.equals("ee000") || isOk.equals("er000")){
+            }else {
                 dialogMsg.setText(getString(R.string.lng_login_txt3));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 dlgPage.setVisibility(View.VISIBLE);
@@ -256,7 +272,7 @@ public class Login extends Fragment implements View.OnClickListener{
                 loginBtn.setEnabled(true);
                 signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
-            }else{
+
 
             }
         }

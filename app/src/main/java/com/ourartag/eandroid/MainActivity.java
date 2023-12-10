@@ -50,18 +50,18 @@ public class MainActivity extends AppCompatActivity {
         return mContext;
     }
     Toolbar mToolbar;
-    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend;
+    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait;
     FragmentContainerView myFrag1;
-    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer;
-    String myID, myName, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress;
-    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats;
+    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin;
+    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats, myusr0;
     Button btn1, dlgOk;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
     Config myConfigs;
-    LinearLayout dlgPage;
+    LinearLayout dlgPage, mPleaseWaitLinl;
     MenuItem about_menu, logout_menu;
-    Boolean menu_stat, periodPerocess, chatgetPerocess;
+    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable;
     int MAIN_LOOP_SEC = 6, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
@@ -107,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
         mSetNotifCTX = new myVolley(this);
         mSetChat = new myVolley(this);
         mGetChats = new myVolley(this);
+        myusr0 = new myVolley(this);
         myConfigs = new Config();
         mBackgroundLocationUpdateService = new BackgroundLocationUpdateService();
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
@@ -115,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
         mSetChatTimer = new esTimer(new Runnable() {public void run() {sendChatToServerCheck();}}, 10, 1000, false);
         mGetChatsTimer = new esTimer(new Runnable() {public void run() {getChatsRequestCheck();}}, 10, 1000, false);
+        myusr0Timer = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 10, 1000, false);
         //endregion
 
         //region findViewById
@@ -127,6 +129,8 @@ public class MainActivity extends AppCompatActivity {
         mainListView = findViewById(R.id.main_list);
         sendBotton = findViewById(R.id.sendBtn);
         txtChatForSend = findViewById(R.id.txtChatToSend);
+        mPleaseWaitLinl = findViewById(R.id.please_wait_for_login_id);
+        usernamePleasewait = findViewById(R.id.username_please_wait_login);
         //endregion
 
         //region ListView setup
@@ -140,9 +144,9 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-                items.remove(position);
+                //items.remove(position);
 
-                adapter.notifyDataSetChanged();
+                //adapter.notifyDataSetChanged();
             }
         });
 
@@ -171,8 +175,18 @@ public class MainActivity extends AppCompatActivity {
         //myID = sharedPref.getString("myID", "0");
         myID = myConfigs.get("myID","0");
         myName = myConfigs.get("myName","");
+        myPass = myConfigs.get("myPass","");
         myLati = myConfigs.get("myLati","0.0");
         myLoni = myConfigs.get("myLoni","0.0");
+        mIsLogin = myConfigs.get("isLogin","0");
+        if(myConfigs.get("bgService","nos").equals("on")) {
+            myServiceEnable = true;
+        }else if(myConfigs.get("bgService","nos").equals("nos")){
+            myConfigs.set("bgService","on");
+            myServiceEnable = true;
+        }else{
+            myServiceEnable = false;
+        }
         myServerAddress = myConfigs.get("myServerAddress","nos");
         if(myServerAddress.equals("nos")){
             myConfigs.set("myServerAddress",getString(R.string.site_Address));
@@ -219,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
             dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
             dlgPage.setVisibility(View.VISIBLE);
         }
-        if(myID.equals("0")){
+        if(myID.equals("0") || myName.toString().isEmpty()){
             myFrag1.setVisibility(View.VISIBLE);
             Fragment mLogin = new Login();
             FragmentManager fm = getSupportFragmentManager();
@@ -229,7 +243,19 @@ public class MainActivity extends AppCompatActivity {
             menu_stat = false;
             invalidateOptionsMenu();
         }else {
-            loginInit();
+            if(mIsLogin.equals("1")){
+                loginInit();
+            }else{
+                myusr0.setmyID("0");
+                myusr0.setParams("name","pass", "", "");
+                myusr0.setValues(myName, myPass, "", "");
+                myusr0.setStarterUrl(myServerAddress + "usr.php?liivx=");
+                myusr0.send2Params(5);
+                myusr0Timer.startTimer();
+                usernamePleasewait.setText(myName);
+                mPleaseWaitLinl.setVisibility(View.VISIBLE);
+            }
+
         }
         //endregion
 
@@ -266,10 +292,14 @@ public class MainActivity extends AppCompatActivity {
         mSetNotifCTXTimer.stopTimer();
         mSetChatTimer.stopTimer();
         mGetChatsTimer.stopTimer();
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction("restartservice");
-        broadcastIntent.setClass(this, Restarter.class);
-        this.sendBroadcast(broadcastIntent);
+
+        if(myConfigs.get("bgService","off").equals("on")){
+            Intent broadcastIntent = new Intent();
+            broadcastIntent.setAction("restartservice");
+            broadcastIntent.setClass(this, Restarter.class);
+            this.sendBroadcast(broadcastIntent);
+        }
+
 
 
         super.onDestroy();
@@ -375,24 +405,33 @@ public class MainActivity extends AppCompatActivity {
         toolbarTxtVeiw.setText(myName);
         myFrag1.setVisibility(View.GONE);
         mLivelog.setmyID(myID);
-        mLivelog.setStarterUrl(getString(R.string.site_Address) + "livee.php?liivx=");
+        mLivelog.setStarterUrl(myServerAddress + "livee.php?liivx=");
         mNotifreg.setmyID(myID);
-        mNotifreg.setStarterUrl(getString(R.string.site_Address) + "reqnotif.php?liivx=");
+        mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
         mSetNotifCTX.setmyID(myID);
-        mSetNotifCTX.setStarterUrl(getString(R.string.site_Address) + "setp.php?liivx=");
+        mSetNotifCTX.setStarterUrl(myServerAddress + "setp.php?liivx=");
         mSetChat.setmyID(myID);
-        mSetChat.setStarterUrl(getString(R.string.site_Address) + "setchat.php?liivx=");
+        mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
         mGetChats.setmyID(myID);
-        mGetChats.setStarterUrl(getString(R.string.site_Address) + "getchats.php?liivx=");
+        mGetChats.setStarterUrl(myServerAddress + "getchats.php?liivx=");
         mainTimer.startTimer();
         menu_stat = true;
         invalidateOptionsMenu();
         myConfigs.set("man","hastam");
         mEditor.putString("man", "hastam");
         mEditor.apply();
-        sureServiceisStarting();
+        myConfigs.set("isLogin","1");
+        if(myServiceEnable){
+            sureServiceisStarting();
+        }else{
+            stopMyService();
+        }
+
     }
 
+    public void stopMyService(){
+        stopService(new Intent(MainActivity.this, BackgroundLocationUpdateService.class));
+    }
     public void setChatToListView(String txtTitle, String txtMessage) {
 
         items.add(new Item(R.drawable.d3,
@@ -662,6 +701,34 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    private void usrLoginCheck(){
+        if(myusr0.get_isSend2ParamAns() && !myusr0.get_ansSend2Param().isEmpty()){
+            myusr0Timer.stopTimer();
+            String isOk = myusr0.get_ansSend2Param();
+            if(isOk.substring(0,2).equals("ok")){
+                String isID = isOk.substring(2);
+                int tmpit = Integer.parseInt(isID);
+                myConfigs.set("myID",tmpit + "");
+                myusr0.set_isSend2ParamAns(false);
+                myConfigs.set("isLogin","1");
+                mPleaseWaitLinl.setVisibility(View.GONE);
+                loginInit();
+
+
+            }else{
+                mPleaseWaitLinl.setVisibility(View.GONE);
+                myFrag1.setVisibility(View.VISIBLE);
+                Fragment mLogin = new Login();
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                fragmentTransaction.replace(R.id.fragmentContainerView, mLogin);
+                fragmentTransaction.commit();
+                menu_stat = false;
+                invalidateOptionsMenu();
+            }
+        }
     }
 
 
