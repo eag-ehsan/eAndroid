@@ -9,10 +9,23 @@
         android:icon="@drawable/address_card_20"
         android:title="@string/menu_about"/>
     <item
+        android:id="@+id/menu_refresh"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/arrows_rotate_20"
+        android:title="@string/menu_refresh" />
+    <item
         android:id="@+id/menu_sendloc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:icon="@drawable/location_smile"
         android:title="@string/menu_sendcoords"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/gear_20"
+        android:title="@string/lng_Setting"
         app:showAsAction="ifRoom" />
 </menu>

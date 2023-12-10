@@ -14,14 +14,15 @@ public class myVolley {
     private static myVolley instance = null;
     public RequestQueue queue;
     private StringRequest stringRequest;
-    private String myID, myStartUrl;
+    private String myID, myStartUrl, myServerAddress;
     private String mParam1, mParam2, mParam3, mParam4, mValue1, mValue2, mValue3, mValue4;
     private Boolean isSingleRequestAns, isSend1ParamAns, isSend2ParamAns, isSend4ParamAns;
     private String ansSingleRequest, ansSend1Param, ansSend2Param, ansSend4Param;
+    Config myConfigs;
 
     public myVolley(Context context){
-        // startUrl = "https://www.ourartag.com/live.php?liivx="
-
+        myConfigs = new Config();
+        myServerAddress = myConfigs.get("myServerAddress", "");
         isSingleRequestAns = false;
         ansSingleRequest = "";
         isSend2ParamAns = false;
@@ -77,7 +78,7 @@ public class myVolley {
 
     public void singleRequest(int outLenght) {
         String uurl = myStartUrl + myID;
-        Log.i("singleRequest", "---------------url: " + uurl);
+        Log.i("~~~~~~~~single", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
                 response -> {
@@ -88,7 +89,7 @@ public class myVolley {
                     String resp = response.substring(0, b);
                     ansSingleRequest = resp;
                     isSingleRequestAns = true;
-                    Log.i("singleRequest", "--------------------------------------------resp: " + ansSingleRequest);
+                    Log.i("~~~~~~~~single", "████████████████" + ansSingleRequest);
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -98,7 +99,6 @@ public class myVolley {
                 }else{
                     ansSingleRequest = tempSingleReq;
                 }
-                Log.i("singleRequest", "--------------------------------------------resp: " + ansSingleRequest);
                 isSingleRequestAns = true;
             }
         });
@@ -123,14 +123,14 @@ public class myVolley {
 
     public void send1Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1;
-        Log.i("send1Params", "---------------url: " + uurl);
+        Log.i("~~~~~~~~send1P", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
                 response -> {
                     String resp = response.substring(0, outLenght);
                     ansSend1Param = resp;
                     isSend1ParamAns = true;
-                    Log.i("send1Params", "-------------------------------------------out: " + ansSend1Param);
+                    Log.i("~~~~~~~~send1P", "████████████████" + ansSend1Param);
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -140,7 +140,6 @@ public class myVolley {
                 }else{
                     ansSend1Param = tempSingleReq;
                 }
-                Log.i("send1Params", "-------------------------------------------out: " + ansSend1Param);
                 isSend1ParamAns = true;
             }
         });
@@ -166,14 +165,14 @@ public class myVolley {
 
     public void send2Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1 + "&" + mParam2 + "=" + mValue2;
-        Log.i("send2Params", "---------------url: " + uurl);
+        Log.i("~~~~~~~~send2P", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
                 response -> {
                     String resp = response.substring(0, outLenght);
                     ansSend2Param = resp;
                     isSend2ParamAns = true;
-                    Log.i("send2Params", "-------------------------------------------out: " + ansSend2Param);
+                    Log.i("~~~~~~~~send2P", "████████████████" + ansSend2Param);
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -183,7 +182,6 @@ public class myVolley {
                 }else{
                     ansSend2Param = tempSingleReq;
                 }
-                Log.i("send2Params", "-------------------------------------------out: " + ansSend2Param);
                 isSend2ParamAns = true;
             }
         });
@@ -207,14 +205,14 @@ public class myVolley {
 
     public void send4Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1 + "&" + mParam2 + "=" + mValue2 + "&" + mParam3 + "=" + mValue3 + "&" + mParam4 + "=" + mValue4;
-        Log.i("send4Params", "---------------url: " + uurl);
+        Log.i("~~~~~~~~send4P", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
                 response -> {
                     String resp = response.substring(0, outLenght);
                     ansSend4Param = resp;
                     isSend4ParamAns = true;
-                    Log.i("send4Params", "-------------------------------------------out: " + ansSend4Param);
+                    Log.i("~~~~~~~~send4P", "████████████████" + ansSend4Param);
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -224,7 +222,6 @@ public class myVolley {
                 }else{
                     ansSend4Param = tempSingleReq;
                 }
-                Log.i("send4Params", "-------------------------------------------out: " + ansSend4Param);
                 isSend4ParamAns = true;
             }
         });

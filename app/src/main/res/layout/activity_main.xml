@@ -106,7 +106,7 @@
                 android:id="@+id/textView2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="OurArtAG copyright ©2023-2027 for OFAC users only"
+                android:text="@string/lng_copyright"
                 android:textAlignment="center"
                 android:textSize="12sp" />
 

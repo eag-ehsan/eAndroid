@@ -7,10 +7,10 @@
     <string name="lng_tophead">Welcome</string>
     <string name="lng_mainStatus">Welcome to our community. you are one of us now</string>
     <string name="lng_serverlabel">Message from server:</string>
-    <string name="lng_about_text">text\tAfter all, what is my sin that I do everything on the Internet with the message: This service is blocked for OFAC countries. I just don\'t know whether to say shame on me or shame on them</string>
-    <string name="lng_about_txt2">text\tYou can visit us in:</string>
+    <string name="lng_about_text">After all, what is my sin that I do everything on the Internet with the message: This service is blocked for OFAC countries. I just don\'t know whether to say shame on me or shame on them</string>
+    <string name="lng_about_txt2">You can visit us in:</string>
     <string name="lng_back">Back</string>
-    <string name="lng_loginhead">text\tLogin Or Signup</string>
+    <string name="lng_loginhead">Login Or Signup</string>
     <string name="lng_Name">Name</string>
     <string name="lng_Password">Password</string>
     <string name="lng_Login">Login</string>
@@ -24,4 +24,27 @@
     <string name="lng_msg1">Your Message sent successfully</string>
     <string name="lng_error2">Sending Message Fail. No internet</string>
     <string name="menu_sendcoords">Send Location to Admin</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="lng_copyright">OurArtAG copyright ©2023-2027 for OFAC users only</string>
+    <string name="lng_maptext1">My location</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="lng_login_txt1">already exist in the database, please select another one</string>
+    <string name="lng_login_txt2">Signup is done, Thank you for joining us</string>
+    <string name="lng_login_txt3">Connecting to Server Failed. Please check you internet and try again</string>
+    <string name="lng_login_txt4">Login is Ok, Welcome to our community</string>
+    <string name="lng_login_txt5">Invalid password for user</string>
+    <string name="lng_login_txt6">This Name is not register to our servers, Please register through the section below and click Signup</string>
+    <string name="lng_login_txt7">Wait for response</string>
+    <string name="site_Address">https://www.ourartag.com/</string>
+    <string name="site_Address_quick">ourartag.com</string>
+    <string name="lng_login_txt8">Enter Your Name and Password please</string>
+    <string name="lng_login_txt9">Click Login button</string>
+    <string name="lng_login_txt10">Click Login to enter the app</string>
+    <string name="lng_Setting">Setting</string>
+    <string name="lng_backgroundservice">Background Service</string>
+    <string name="lng_server">Server</string>
+    <string name="lng_Cancel">Cancel</string>
+    <string name="lng_Save">Save</string>
+    <string name="lng_login_txt11">Please wait for login ...</string>
 </resources>

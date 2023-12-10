@@ -31,7 +31,7 @@ public class Login extends Fragment implements View.OnClickListener{
     private static final String ARG_PARAM2 = "param2";
 
     // TODO: Rename and change types of parameters
-    private String mParam2, mParam1, loginproc;
+    private String mParam2, mParam1, loginproc, myServerAddress;
     private Button loginBtn, btnBack, dlgOk, signupBtn;
     private EditText txtNameLogin, txtNameSignup, txtPassLogin, txtPassSignup;
     private TextView resLogin, dialogMsg, titleLogin;
@@ -75,6 +75,8 @@ public class Login extends Fragment implements View.OnClickListener{
         sharedPref = getContext().getSharedPreferences("ourartag.com", Context.MODE_PRIVATE);
         mEditor = sharedPref.edit();
         myConfigs = new Config();
+        myConfigs = new Config();
+        myServerAddress = myConfigs.get("myServerAddress", "");
         loginproc = "";
     }
 
@@ -110,20 +112,19 @@ public class Login extends Fragment implements View.OnClickListener{
             fragmentTransaction.remove(Login.this).commit();
         }
         if(v.getId()==R.id.btnLogin){
-            Log.i("LLOOGGIINN", "***************************************** txtNameLogin: " + txtNameLogin.getText().toString());
             if(txtNameLogin.getText().toString().isEmpty() || txtPassLogin.getText().toString().isEmpty()){
-                dialogMsg.setText("Enter Your Name and Password please");
+                dialogMsg.setText(getString(R.string.lng_login_txt8));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 dlgPage.setVisibility(View.VISIBLE);
             }else{
                 myusr0.setmyID("0");
                 myusr0.setParams("name","pass", "", "");
                 myusr0.setValues(txtNameLogin.getText().toString(), txtPassLogin.getText().toString(), "", "");
-                myusr0.setStarterUrl("https://www.ourartag.com/usr.php?liivx=");
+                myusr0.setStarterUrl(getString(R.string.site_Address) + "usr.php?liivx=");
                 myusr0.send2Params(5);
-                loginBtn.setText("Wait for response");
+                loginBtn.setText(getString(R.string.lng_login_txt7));
                 loginBtn.setEnabled(false);
-                signupBtn.setText("Wait for response");
+                signupBtn.setText(getString(R.string.lng_login_txt7));
                 signupBtn.setEnabled(false);
 
                 timer1000 = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 10, 1000, true);
@@ -143,8 +144,8 @@ public class Login extends Fragment implements View.OnClickListener{
                 txtPassLogin.setText(txtPassSignup.getText().toString());
                 txtNameSignup.setText("");
                 txtPassSignup.setText("");
-                titleLogin.setText("Click Login button");
-                resLogin.setText("Click Login to enter the app");
+                titleLogin.setText(getString(R.string.lng_login_txt9));
+                resLogin.setText(getString(R.string.lng_login_txt10));
                 dlgPage.setVisibility(View.GONE);
 
             }else{
@@ -154,18 +155,18 @@ public class Login extends Fragment implements View.OnClickListener{
         }
         if(v.getId()==R.id.btnSignup){
             if(txtNameSignup.getText().toString().isEmpty() || txtPassSignup.getText().toString().isEmpty()){
-                dialogMsg.setText("Enter Your Name and Password please");
+                dialogMsg.setText(getString(R.string.lng_login_txt8));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 dlgPage.setVisibility(View.VISIBLE);
             }else{
                 myusr0.setmyID("add");
                 myusr0.setParams("name","pass", "", "");
                 myusr0.setValues(txtNameSignup.getText().toString(), txtPassSignup.getText().toString(), "", "");
-                myusr0.setStarterUrl("https://www.ourartag.com/usr.php?liivx=");
+                myusr0.setStarterUrl(getString(R.string.site_Address) + "usr.php?liivx=");
                 myusr0.send2Params(5);
-                loginBtn.setText("Wait for response");
+                loginBtn.setText(getString(R.string.lng_login_txt6));
                 loginBtn.setEnabled(false);
-                signupBtn.setText("Wait for response");
+                signupBtn.setText(getString(R.string.lng_login_txt6));
                 signupBtn.setEnabled(false);
                 timer1001 = new esTimer(new Runnable() {public void run() {usrSignupCheck();}}, 10, 1000, true);
             }
@@ -177,29 +178,28 @@ public class Login extends Fragment implements View.OnClickListener{
         if(myusr0.get_isSend2ParamAns()){
             String isOk = myusr0.get_ansSend2Param();
             if(isOk.equals("no000")){
-                resLogin.setText("This Name is not register to our servers, Please register through the section below and click Signup");
-                dialogMsg.setText("This Name is not register to our servers, Please register through the section below and click Signup");
+                resLogin.setText(getString(R.string.lng_login_txt6));
+                dialogMsg.setText(getString(R.string.lng_login_txt6));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 loginproc = "nousr";
                 dlgPage.setVisibility(View.VISIBLE);
                 myusr0.set_isSend2ParamAns(false);
                 timer1000.stopTimer();
-                loginBtn.setText("Login");
+                loginBtn.setText(getString(R.string.lng_Login));
                 loginBtn.setEnabled(true);
-                signupBtn.setText("Signup");
+                signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
-                Log.i("LLOOGGIINN", "***************************************** no: ");
             }else if(isOk.equals("ps000")){
-                resLogin.setText("Invalid password for user [" + txtNameLogin.getText().toString() + "]");
-                dialogMsg.setText("Invalid password for user [" + txtNameLogin.getText().toString() + "]");
+                resLogin.setText(getString(R.string.lng_login_txt5) + " " + txtNameLogin.getText().toString());
+                dialogMsg.setText(getString(R.string.lng_login_txt5) + " " + txtNameLogin.getText().toString());
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 loginproc = "psinv";
                 dlgPage.setVisibility(View.VISIBLE);
                 myusr0.set_isSend2ParamAns(false);
                 timer1000.stopTimer();
-                loginBtn.setText("Login");
+                loginBtn.setText(getString(R.string.lng_Login));
                 loginBtn.setEnabled(true);
-                signupBtn.setText("Signup");
+                signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
 
             }else if(isOk.substring(0,2).equals("ok")){
@@ -207,10 +207,9 @@ public class Login extends Fragment implements View.OnClickListener{
                 int tmpit = Integer.parseInt(isID);
                 myConfigs.set("myID",tmpit + "");
                 myConfigs.set("myName",txtNameLogin.getText().toString());
-                Log.i("LLOOGGIINN", "***************************************** myConfigs.set " + tmpit);
                 myusr0.set_isSend2ParamAns(false);
                 timer1000.stopTimer();
-                dialogMsg.setText("Login is Ok, Welcome to our community");
+                dialogMsg.setText(getString(R.string.lng_login_txt4));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 loginproc = "lgnok";
                 dlgPage.setVisibility(View.VISIBLE);
@@ -225,41 +224,38 @@ public class Login extends Fragment implements View.OnClickListener{
         if(myusr0.get_isSend2ParamAns()){
             String isOk = myusr0.get_ansSend2Param();
             if(isOk.equals("ex000")){
-                dialogMsg.setText("This Name '" + txtNameSignup.getText().toString() + "' already exist in the database, please select another one");
+                dialogMsg.setText(txtNameSignup.getText().toString() + " " + getString(R.string.lng_login_txt1));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 loginproc = "exusr";
                 dlgPage.setVisibility(View.VISIBLE);
                 myusr0.set_isSend2ParamAns(false);
                 timer1001.stopTimer();
-                loginBtn.setText("Login");
+                loginBtn.setText(getString(R.string.lng_Login));
                 loginBtn.setEnabled(true);
-                signupBtn.setText("Signup");
+                signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
-                Log.i("Signup", "***************************************** no: ");
             }else if(isOk.equals("ok000")){
                 myusr0.set_isSend2ParamAns(false);
                 timer1001.stopTimer();
-                dialogMsg.setText("Signup is done, Thank you for joining us");
+                dialogMsg.setText(getString(R.string.lng_login_txt2));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 loginproc = "sgnok";
                 dlgPage.setVisibility(View.VISIBLE);
-                loginBtn.setText("Login");
+                loginBtn.setText(getString(R.string.lng_Login));
                 loginBtn.setEnabled(true);
-                signupBtn.setText("Signup");
+                signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
 
-                Log.i("Signup", "***************************************** >> " + isOk.toString());
             }else if(isOk.equals("ee000") || isOk.equals("er000")){
-                dialogMsg.setText(" Connecting to Server Failed. Please check you internet and try again");
+                dialogMsg.setText(getString(R.string.lng_login_txt3));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
                 dlgPage.setVisibility(View.VISIBLE);
                 myusr0.set_isSend2ParamAns(false);
                 timer1001.stopTimer();
-                loginBtn.setText("Login");
+                loginBtn.setText(getString(R.string.lng_Login));
                 loginBtn.setEnabled(true);
-                signupBtn.setText("Signup");
+                signupBtn.setText(getString(R.string.lng_Signup));
                 signupBtn.setEnabled(true);
-                Log.i("Signup", "***************************************** >> " + isOk.toString());
             }else{
 
             }

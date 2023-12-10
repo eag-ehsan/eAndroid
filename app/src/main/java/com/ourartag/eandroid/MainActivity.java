@@ -8,14 +8,13 @@ import androidx.fragment.app.FragmentContainerView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.app.AlarmManager;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
@@ -25,25 +24,22 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.PopupMenu;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -57,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend;
     FragmentContainerView myFrag1;
     esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer;
-    String myID, myName, notifCTS, cmdCTS;
+    String myID, myName, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress;
     myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats;
     Button btn1, dlgOk;
     SharedPreferences sharedPref;
@@ -66,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout dlgPage;
     MenuItem about_menu, logout_menu;
     Boolean menu_stat, periodPerocess, chatgetPerocess;
-    int MAIN_LOOP_SEC = 10, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat;
+    int MAIN_LOOP_SEC = 6, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
     ArrayList<Item> items;
@@ -74,9 +70,13 @@ public class MainActivity extends AppCompatActivity {
     ImageButton sendBotton;
     ListViewAdapter adapter;
     MediaPlayer mMediaPlayer;
+    Intent mServiceIntent;
+    private BackgroundLocationUpdateService mBackgroundLocationUpdateService;
+    NotificationsUtils nNu;
     Item myItems;
     //endregion
 
+    //region Overrides
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,12 +91,24 @@ public class MainActivity extends AppCompatActivity {
 
         //region Class get Objrcts
         mContext = this;
+        nNu = new NotificationsUtils(getApplicationContext());
+        if(nNu.isNotificationEnabled()){
+            Toast.makeText(mContext, "is Enable", Toast.LENGTH_SHORT).show();
+        }else {
+            Toast.makeText(mContext, "Disablled", Toast.LENGTH_SHORT).show();
+            Intent settingsIntent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())
+                    .putExtra(Settings.EXTRA_CHANNEL_ID, 2727);
+            startActivity(settingsIntent);
+        }
         mLivelog = new myVolley(this);
         mNotifreg = new myVolley(this);
         mSetNotifCTX = new myVolley(this);
         mSetChat = new myVolley(this);
         mGetChats = new myVolley(this);
         myConfigs = new Config();
+        mBackgroundLocationUpdateService = new BackgroundLocationUpdateService();
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
         mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
@@ -116,8 +128,8 @@ public class MainActivity extends AppCompatActivity {
         sendBotton = findViewById(R.id.sendBtn);
         txtChatForSend = findViewById(R.id.txtChatToSend);
         //endregion
-        //ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.activity_listview, mainListArray);
-        //mainListView.setAdapter(adapter);
+
+        //region ListView setup
         items = new ArrayList<>();
         adapter = new ListViewAdapter(this, items);
         mainListView.setAdapter(adapter);
@@ -133,13 +145,39 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
+
+        //endregion
+
+        //region HomeWatcher
+        HomeWatcher mHomeWatcher = new HomeWatcher(this);
+        mHomeWatcher.setOnHomePressedListener(new OnHomePressedListener() {
+            @Override
+            public void onHomePressed() {
+                myConfigs.set("man","oftadam");
+                mEditor.putString("man", "oftadam");
+                mEditor.apply();
+            }
+            @Override
+            public void onHomeLongPressed() {
+            }
+        });
+        mHomeWatcher.startWatch();
+        //endregion
+
         //region Configs
-        sharedPref = mContext.getSharedPreferences("ourartag.com", Context.MODE_PRIVATE);
+        sharedPref = mContext.getSharedPreferences(getString(R.string.site_Address_quick), Context.MODE_PRIVATE);
         mEditor = sharedPref.edit();
         //mEditor.putString("myID", "3");
         //myID = sharedPref.getString("myID", "0");
         myID = myConfigs.get("myID","0");
         myName = myConfigs.get("myName","");
+        myLati = myConfigs.get("myLati","0.0");
+        myLoni = myConfigs.get("myLoni","0.0");
+        myServerAddress = myConfigs.get("myServerAddress","nos");
+        if(myServerAddress.equals("nos")){
+            myConfigs.set("myServerAddress",getString(R.string.site_Address));
+        }
+        myServerAddress = myConfigs.get("myServerAddress", "");
         //endregion
 
         //region defualt values
@@ -148,9 +186,10 @@ public class MainActivity extends AppCompatActivity {
         chatgetPerocess = false;
         notifCTS = "";
         cmdCTS = "";
+        newchat = "";
         mainLoopTry = 0;
         mCounterSendchat = 0;
-        mCounterGetchat = 0;
+        mCounterGetchat = 100;
         //endregion
 
         //region setOnClickListeners
@@ -196,6 +235,48 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Toast.makeText(mContext, "کجا میخوای بری؟ بخدا اگه بزارم!! شما مهمانید", Toast.LENGTH_LONG).show();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        //registerReceiver(broadcastReceiver, new IntentFilter(GoogleService.str_receiver));
+
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+    @Override
+    protected void onDestroy() {
+        //stopService(mServiceIntent);
+        myConfigs.set("man","raftam");
+        mEditor.putString("man", "raftam");
+        mEditor.apply();
+        mainTimer.stopTimer();
+        mLivelogTimer.stopTimer();
+        mNotifregTimer.stopTimer();
+        mSetNotifCTXTimer.stopTimer();
+        mSetChatTimer.stopTimer();
+        mGetChatsTimer.stopTimer();
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction("restartservice");
+        broadcastIntent.setClass(this, Restarter.class);
+        this.sendBroadcast(broadcastIntent);
+
+
+        super.onDestroy();
+    }
+
+    //endregion
+
     //region Main Menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -203,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
         inflater.inflate(R.menu.eandroid_menu, menu);
         about_menu = (MenuItem) menu.findItem(R.id.menu_about);
         logout_menu = (MenuItem) menu.findItem(R.id.menu_logout);
-        Log.i("MMMMMMMMM", "onCreateOptionsMenu");
         return true;
     }
     @Override
@@ -215,7 +295,6 @@ public class MainActivity extends AppCompatActivity {
             FragmentTransaction fragmentTransaction = fm.beginTransaction();
             fragmentTransaction.replace(R.id.fragmentContainerView, mAbout);
             fragmentTransaction.commit();
-            Log.i("MMMMMMMMM", "+++++++++++++++++++++++++++++++++++++++++++++++++Clicked on about");
             return true;
 
         }else if(item.getItemId()==R.id.menu_logout){
@@ -229,14 +308,30 @@ public class MainActivity extends AppCompatActivity {
             fragmentTransaction.commit();
             menu_stat = false;
             invalidateOptionsMenu();
-            Log.i("MMMMMMMMM", "+++++++++++++++++++++++++++++++++++++++++++++++++Clicked on Logout");
 //            View menuItemView = findViewById(R.id.moreVertical);
 //            PopupMenu popup = new PopupMenu(getContext(), menuItemView);
 //            popup.getMenuInflater().inflate(R.menu.eandroid_menu, popup.getMenu());
 //            popup.show();
             return true;
         }else if(item.getItemId()==R.id.menu_sendloc){
-            playAlarmSound();
+            myFrag1.setVisibility(View.VISIBLE);
+            Fragment mMapneshan = new Mapneshan();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fm.beginTransaction();
+            fragmentTransaction.replace(R.id.fragmentContainerView, mMapneshan);
+            fragmentTransaction.commit();
+            //playAlarmSound();
+            return true;
+        }else if(item.getItemId()==R.id.menu_setting){
+            myFrag1.setVisibility(View.VISIBLE);
+            Fragment mMysetting = new Mysetting();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fm.beginTransaction();
+            fragmentTransaction.replace(R.id.fragmentContainerView, mMysetting);
+            fragmentTransaction.commit();
+            return true;
+        }else if(item.getItemId()==R.id.menu_refresh){
+            mCounterGetchat = 100;
             return true;
         }else{
             return super.onOptionsItemSelected(item);
@@ -252,6 +347,8 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
     //region public methods
+
+
     public Boolean isNetworkAvailable(Application application) {
         ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -272,21 +369,28 @@ public class MainActivity extends AppCompatActivity {
     public void loginInit(){
         myID = myConfigs.get("myID","0");
         myName = myConfigs.get("myName","");
+        mEditor.putString("myID", myID);
+        mEditor.putString("myName", myName);
+        mEditor.apply();
         toolbarTxtVeiw.setText(myName);
         myFrag1.setVisibility(View.GONE);
         mLivelog.setmyID(myID);
-        mLivelog.setStarterUrl("https://www.ourartag.com/live.php?liivx=");
+        mLivelog.setStarterUrl(getString(R.string.site_Address) + "livee.php?liivx=");
         mNotifreg.setmyID(myID);
-        mNotifreg.setStarterUrl("https://www.ourartag.com/reqnotif.php?liivx=");
+        mNotifreg.setStarterUrl(getString(R.string.site_Address) + "reqnotif.php?liivx=");
         mSetNotifCTX.setmyID(myID);
-        mSetNotifCTX.setStarterUrl("https://www.ourartag.com/setp.php?liivx=");
+        mSetNotifCTX.setStarterUrl(getString(R.string.site_Address) + "setp.php?liivx=");
         mSetChat.setmyID(myID);
-        mSetChat.setStarterUrl("https://www.ourartag.com/setchat.php?liivx=");
+        mSetChat.setStarterUrl(getString(R.string.site_Address) + "setchat.php?liivx=");
         mGetChats.setmyID(myID);
-        mGetChats.setStarterUrl("https://www.ourartag.com/getchats.php?liivx=");
+        mGetChats.setStarterUrl(getString(R.string.site_Address) + "getchats.php?liivx=");
         mainTimer.startTimer();
         menu_stat = true;
         invalidateOptionsMenu();
+        myConfigs.set("man","hastam");
+        mEditor.putString("man", "hastam");
+        mEditor.apply();
+        sureServiceisStarting();
     }
 
     public void setChatToListView(String txtTitle, String txtMessage) {
@@ -316,15 +420,42 @@ public class MainActivity extends AppCompatActivity {
         MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
         mp.start();
     }
+    public void sureServiceisStarting(){
+        Boolean ympbool = isMyServiceRunning(mBackgroundLocationUpdateService.getClass());
+        if(!ympbool){
+            mServiceIntent = new Intent(MainActivity.this, mBackgroundLocationUpdateService.getClass());
 
+            if (!isMyServiceRunning(mBackgroundLocationUpdateService.getClass())) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    getApplicationContext().startForegroundService(new Intent(getApplicationContext(), mBackgroundLocationUpdateService.getClass()));
+                } else {
+                    getApplicationContext().startService(new Intent(getApplicationContext(), mBackgroundLocationUpdateService.getClass()));
+                }
+                //startService(mServiceIntent);
+                Log.i("Count", "################## starting service");
+            }
+        }else{
+            Log.i("Count", "################## great. you are alive yourself");
+        }
+    }
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Running");
+                return true;
+            }
+        }
+        Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Not running");
+        return false;
+    }
     //endregion
 
     //region private methods
     private void mainLoop(){
-        Log.i("oooooooooooo", "++++++++++++++++++periodPerocess is " + periodPerocess + " ++++++++++++++++++++++++++++++mainLoop");
         if(!periodPerocess){
             mainLoopTry = 0;
-            mLivelog.singleRequest(2);
+            mLivelog.singleRequest(3);
             mLivelogTimer.startTimer();
         }else {
             mainLoopTry++;
@@ -332,7 +463,8 @@ public class MainActivity extends AppCompatActivity {
             mainAppStatus.setText(getString(R.string.lng_mainStatus_txt1));
         }
 
-        if(!chatgetPerocess){
+        if(!chatgetPerocess && mCounterGetchat>=100 && mCounterGetchat<103){
+
             getChatsRequest();
         }else{
 
@@ -342,35 +474,40 @@ public class MainActivity extends AppCompatActivity {
     }
     private void mLivelogResponseCheck(){
         if(mLivelog.get_isSingleRequestAns() && !mLivelog.get_ansSingleRequest().isEmpty()){
-            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~mLivelogTimer.stopTimer()~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            Log.i("~~~~~~~LiveLog", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~LiveLog~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
             mLivelogTimer.stopTimer();
             String isOk = mLivelog.get_ansSingleRequest();
-            if(isOk.equals("sq")){
+            if(isOk.equals("sqE")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt2));
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sq END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                Log.i("~~~~~~~LiveLog", "                                 sqE END                                try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
                 mainTimer.stopTimer();
                 mainTimer.startTimer();
-            }else if(isOk.equals("er")){
+            }else if(isOk.equals("err")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt3));
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ er END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+                Log.i("~~~~~~~LiveLog", "                                 err END                                try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
-            }else if(isOk.equals("11") || isOk.equals("00") || isOk.equals("10") || isOk.equals("01")){
+            }else {
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt4));
-                notifCTS = isOk.substring(1);
+                notifCTS = isOk.substring(1,2);
                 cmdCTS = isOk.substring(0,1);
+                newchat = isOk.substring(2);
                 if(notifCTS.equals("1")){
                     getNotif();
                 }else{
-                    Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ done END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                     periodPerocess = false;
                 }
 
+                if(newchat.equals("1")){
+                    if(!chatgetPerocess){
+                        mCounterGetchat = 100;
+                    }else{
 
-            }else{
+                    }
+                }
 
             }
             mLivelog.set_isSingleRequestAns(false);
@@ -379,33 +516,29 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void getNotif(){
-        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifreg.singleRequest~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mNotifreg.singleRequest(180);
         mNotifregTimer.startTimer();
     }
     private void getNotifCheck(){
         if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
-            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifregTimer.stopTimer~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            Log.i("~~~~~~getNotif", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getNotif~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
             mNotifregTimer.stopTimer();
             String respo = mNotifreg.get_ansSingleRequest();
             String isOk = respo.substring(0,6);
             if(isOk.equals("sqErro")){
+                Log.i("~~~~~~getNotif", "                                 sqErro END                             try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 long templng1 = mainTimer.getCurrentDuration();
                 if(templng1<((1000*MAIN_LOOP_SEC)/2)){
-                    Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~sqErro -> getNotif() ~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                     getNotif();
                 }else{
-                    Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sqErro -> END~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                     periodPerocess = false;
                 }
             }else if(isOk.equals("cancel")){
                 periodPerocess = false;
             }else if(isOk.equals("error!")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~mNotifreg error! END~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
                 
             }else if(isOk.equals("<html>")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<html>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 String responotif = respo.substring(53);
                 textViewRespoNotif.setText(responotif);
                 setNotifCTXf();
@@ -418,7 +551,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void setNotifCTXf(){
-        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.send4Params~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         mSetNotifCTX.setParams("p1","v1", "p2", "v2");
         mSetNotifCTX.setValues("notifCTS", "0", "notifCTR", "1");
         mSetNotifCTX.send4Params(2);
@@ -426,18 +558,15 @@ public class MainActivity extends AppCompatActivity {
     }
     private void setNotifCTXcheck(){
         if(mSetNotifCTX.get_isSend4ParamAns() && !mSetNotifCTX.get_ansSend4Param().isEmpty()){
-            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf.stopTimer~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+            Log.i("~~~~~NotifCTXf", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NotifCTXf~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
             mNotifregTimer.stopTimer();
             String isOk = mSetNotifCTX.get_ansSend4Param();
             if(isOk.equals("ok")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ok END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
 
             }else if(isOk.equals("p4")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. p4 END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
             }else if(isOk.equals("er")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setNotifCTXf. er END~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
 
             }else{
@@ -449,7 +578,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void sendChatToServer(String txtMessage) {
-        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mSetChat.send1Params~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
         mSetChat.setParams("msg","", "", "");
         mSetChat.setValues(txtMessage, "", "", "");
         mSetChat.send1Params(2);
@@ -457,11 +585,10 @@ public class MainActivity extends AppCompatActivity {
     }
     private void sendChatToServerCheck(){
         if(mSetChat.get_isSend1ParamAns() && !mSetChat.get_ansSend1Param().isEmpty()){
-            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mSetChat.stopTimer~`~~~~~~~~~~~~~~~~~~~~~~~~~~~ delay: " + Math.floor(mSetChatTimer.getCurrentDuration()));
+            Log.i("~~~~~~sendChat", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sendChat~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             mSetChatTimer.stopTimer();
             String isOk = mSetChat.get_ansSend1Param();
             if(isOk.equals("ok")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chat ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
                 mSetChat.set_isSend1ParamAns(false);
                 sendBotton.setEnabled(true);
                 txtChatForSend.setText("");
@@ -469,7 +596,7 @@ public class MainActivity extends AppCompatActivity {
                 dialogMsg.setText(getString(R.string.lng_msg1));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
             }else{
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chat Fail~~~~~~~~~~~~~~~~~~try(" + String.valueOf(mCounterSendchat) + ")~~~~~~~~ ");
+                Log.i("~~~~~~sendChat", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Chat Fail~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                 mSetChat.set_isSend1ParamAns(false);
                 mSetChat.send1Params(2);
                 mSetChatTimer.startTimer();
@@ -488,47 +615,49 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void getChatsRequest(){
-        Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mGetChats.singleRequest~~~~~~~~~~~~~~~~~~~~~~~~");
         mGetChats.singleRequest(2068);
         mGetChatsTimer.startTimer();
         chatgetPerocess = true;
+
     }
     private void getChatsRequestCheck(){
         if(mGetChats.get_isSingleRequestAns() && !mGetChats.get_ansSingleRequest().isEmpty()){
-
+            mCounterGetchat++;
             mGetChatsTimer.stopTimer();
             String completeresp = mGetChats.get_ansSingleRequest();
-            Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~completeresp: " + completeresp);
-            String aslStr = "";
-            String strttem = completeresp.substring(0,53);
-            strttem = strttem.substring(47);
-            String isOk = strttem.substring(0,2);
-            //int numberofe =Integer.valueOf(strttem.substring(2));
-            if(isOk.equals("ok")){
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get chat ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
-                int b = completeresp.indexOf("</body>") ;
-                aslStr = completeresp.substring(53, b);
-                String[] echitems = aslStr.split(";");
-                int ii=0, hh=0;
-                String tempstrName, tempstrMsg;
-                removeAllItemsFromListview();
-                for(ii=(echitems.length-1);ii>=0;ii--){
-                    hh = echitems[ii].indexOf(">");
-                    tempstrName = echitems[ii].substring(0,hh);
-                    tempstrMsg = echitems[ii].substring(hh+1);
-                    setChatToListView(tempstrName, tempstrMsg);
+            if(completeresp.equals("sqError")){
 
-
-                }
-                chatgetPerocess = false;
             }else{
-                Log.i("ckk", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get chat Fail~~~~~~~~~~~~~~~~~~try(" + String.valueOf(mCounterGetchat) + ")~~~~~~~~ ");
-                mCounterGetchat++;
-                if(mCounterGetchat>65000){
-                    mCounterGetchat = 0;
+                String aslStr = "";
+                String strttem = completeresp.substring(0,53);
+                strttem = strttem.substring(47);
+                String isOk = strttem.substring(0,2);
+                //int numberofe =Integer.valueOf(strttem.substring(2));
+                if(isOk.equals("ok")){
+                    Log.i("~~~~~~~getChat", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get chat ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
+                    int b = completeresp.indexOf("</body>") ;
+                    aslStr = completeresp.substring(53, b);
+                    String[] echitems = aslStr.split(";");
+                    int ii=0, hh=0;
+                    String tempstrName, tempstrMsg;
+                    removeAllItemsFromListview();
+                    for(ii=(echitems.length-1);ii>=0;ii--){
+                        hh = echitems[ii].indexOf(">");
+                        tempstrName = echitems[ii].substring(0,hh);
+                        tempstrMsg = echitems[ii].substring(hh+1);
+                        setChatToListView(tempstrName, tempstrMsg);
+
+
+                    }
+                    chatgetPerocess = false;
+                }else{
+                    if(mCounterGetchat>65000){
+                        mCounterGetchat = 0;
+                    }
+                    chatgetPerocess = false;
                 }
-                chatgetPerocess = false;
             }
+
 
 
         }
@@ -538,13 +667,5 @@ public class MainActivity extends AppCompatActivity {
 
 //endregion
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            Toast.makeText(mContext, "کجا میخوای بری؟ بخدا اگه بزارم!! شما مهمانید", Toast.LENGTH_LONG).show();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
 
 }
