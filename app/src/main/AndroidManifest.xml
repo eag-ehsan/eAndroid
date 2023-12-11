@@ -38,7 +38,9 @@
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
+            android:allowBackup="true"
             android:exported="true"
+            android:supportsRtl="true"
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
