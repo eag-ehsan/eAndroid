@@ -34,6 +34,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TabHost;
@@ -50,24 +51,27 @@ public class MainActivity extends AppCompatActivity {
         return mContext;
     }
     Toolbar mToolbar;
-    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait;
-    FragmentContainerView myFrag1;
-    esTimer mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
-    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin;
-    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats, myusr0;
+    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait, nameAnyUserSelect_tv, online_txttv, seen_txttv;
     Button btn1, dlgOk;
+    LinearLayout dlgPage, mPleaseWaitLinl;
+    MenuItem about_menu, logout_menu;
+    ListView mainListView;
+    ImageButton sendBotton;
+    ImageView online_imgv, seen_imgv;
+    FragmentContainerView myFrag1;
+    esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect;
+    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats, myusr0;
+
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
     Config myConfigs;
-    LinearLayout dlgPage, mPleaseWaitLinl;
-    MenuItem about_menu, logout_menu;
-    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable;
-    int MAIN_LOOP_SEC = 6, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat;
+    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen;
+    int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
     ArrayList<Item> items;
-    ListView mainListView;
-    ImageButton sendBotton;
+
     ListViewAdapter adapter;
     MediaPlayer mMediaPlayer;
     Intent mServiceIntent;
@@ -92,10 +96,7 @@ public class MainActivity extends AppCompatActivity {
         //region Class get Objrcts
         mContext = this;
         nNu = new NotificationsUtils(getApplicationContext());
-        if(nNu.isNotificationEnabled()){
-            Toast.makeText(mContext, "is Enable", Toast.LENGTH_SHORT).show();
-        }else {
-            Toast.makeText(mContext, "Disablled", Toast.LENGTH_SHORT).show();
+        if(!nNu.isNotificationEnabled()){
             Intent settingsIntent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())
@@ -111,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
         myConfigs = new Config();
         mBackgroundLocationUpdateService = new BackgroundLocationUpdateService();
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
+        baseTimer = new esTimer(new Runnable() {public void run() {baseLoop();}}, 10, 500, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
         mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
         mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
@@ -131,6 +133,11 @@ public class MainActivity extends AppCompatActivity {
         txtChatForSend = findViewById(R.id.txtChatToSend);
         mPleaseWaitLinl = findViewById(R.id.please_wait_for_login_id);
         usernamePleasewait = findViewById(R.id.username_please_wait_login);
+        nameAnyUserSelect_tv = findViewById(R.id.nameAnySelectUser_id);
+        online_imgv = findViewById(R.id.online_imgid);
+        seen_imgv = findViewById(R.id.seen_imgid);
+        online_txttv = findViewById(R.id.online_txtid);
+        seen_txttv = findViewById(R.id.seen_txtid);
         //endregion
 
         //region ListView setup
@@ -141,7 +148,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 // TODO Auto-generated method stub
+                nameAnyUserSelect = items.get(position).getTitle();
+                if(!nameAnyUserSelect.isEmpty()){
 
+                    if(nameAnyUserSelect.equals(myName)){
+                        nameAnyUserSelect_tv.setText(getString(R.string.lng_selectusr) + " " + getString(R.string.lng_notyourself));
+                        isAnyUserSelect = false;
+                    }else{
+                        nameAnyUserSelect_tv.setText(nameAnyUserSelect);
+                        isAnyUserSelect = true;
+                    }
+                }else{
+                    isAnyUserSelect = false;
+                }
 
 
                 //items.remove(position);
@@ -157,8 +176,8 @@ public class MainActivity extends AppCompatActivity {
         mHomeWatcher.setOnHomePressedListener(new OnHomePressedListener() {
             @Override
             public void onHomePressed() {
-                myConfigs.set("man","oftadam");
-                mEditor.putString("man", "oftadam");
+                myConfigs.set("man","raftam");
+                mEditor.putString("man", "raftam");
                 mEditor.apply();
             }
             @Override
@@ -171,8 +190,9 @@ public class MainActivity extends AppCompatActivity {
         //region Configs
         sharedPref = mContext.getSharedPreferences(getString(R.string.site_Address_quick), Context.MODE_PRIVATE);
         mEditor = sharedPref.edit();
-        //mEditor.putString("myID", "3");
-        //myID = sharedPref.getString("myID", "0");
+        mEditor.putString("loginInit", "no");
+        mEditor.apply();
+        myID = sharedPref.getString("myID", "0");
         myID = myConfigs.get("myID","0");
         myName = myConfigs.get("myName","");
         myPass = myConfigs.get("myPass","");
@@ -204,6 +224,10 @@ public class MainActivity extends AppCompatActivity {
         mainLoopTry = 0;
         mCounterSendchat = 0;
         mCounterGetchat = 100;
+        isAnyUserSelect = false;
+        isAnyUserSelectOnline = false;
+        isAnyUserSelectSeen = false;
+        nameAnyUserSelect = "";
         //endregion
 
         //region setOnClickListeners
@@ -220,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 //setChatToListView(myName, txtChatForSend.getText().toString());
+                isAnyUserSelectSeen = false;
                 sendChatToServer(txtChatForSend.getText().toString());
                 sendBotton.setEnabled(false);
                 sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.gray));
@@ -273,12 +298,36 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        //registerReceiver(broadcastReceiver, new IntentFilter(GoogleService.str_receiver));
+        Log.i("---------", "--------------------------------------------------------------------------------------------------onResume");
+        String tnppp = sharedPref.getString("loginInit", "no");
+        if(tnppp.equals("ok")){
+            myConfigs.set("man","hastam");
+            mEditor.putString("man", "hastam");
+            mEditor.apply();
+            //periodPerocess = false;
+            if(!mainTimer.isTimerOn()){
+                mainTimer.startTimer();
+            }
+            if(!baseTimer.isTimerOn()){
+                baseTimer.startTimer();
+            }
 
+        }
     }
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i("---------", "--------------------------------------------------------------------------------------------------onPause");
+        myConfigs.set("man","raftam");
+        mEditor.putString("man", "raftam");
+        mEditor.apply();
+        mainTimer.stopTimer();
+        baseTimer.stopTimer();
+        mLivelogTimer.stopTimer();
+        mNotifregTimer.stopTimer();
+        mSetNotifCTXTimer.stopTimer();
+        mSetChatTimer.stopTimer();
+        mGetChatsTimer.stopTimer();
     }
     @Override
     protected void onDestroy() {
@@ -287,12 +336,13 @@ public class MainActivity extends AppCompatActivity {
         mEditor.putString("man", "raftam");
         mEditor.apply();
         mainTimer.stopTimer();
+        baseTimer.stopTimer();
         mLivelogTimer.stopTimer();
         mNotifregTimer.stopTimer();
         mSetNotifCTXTimer.stopTimer();
         mSetChatTimer.stopTimer();
         mGetChatsTimer.stopTimer();
-
+        Log.i("---------", "--------------------------------------------------------------------------------------------------onDestroy");
         if(myConfigs.get("bgService","off").equals("on")){
             Intent broadcastIntent = new Intent();
             broadcastIntent.setAction("restartservice");
@@ -405,7 +455,8 @@ public class MainActivity extends AppCompatActivity {
         toolbarTxtVeiw.setText(myName);
         myFrag1.setVisibility(View.GONE);
         mLivelog.setmyID(myID);
-        mLivelog.setStarterUrl(myServerAddress + "livee.php?liivx=");
+
+        mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
         mNotifreg.setmyID(myID);
         mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
         mSetNotifCTX.setmyID(myID);
@@ -415,6 +466,7 @@ public class MainActivity extends AppCompatActivity {
         mGetChats.setmyID(myID);
         mGetChats.setStarterUrl(myServerAddress + "getchats.php?liivx=");
         mainTimer.startTimer();
+        baseTimer.startTimer();
         menu_stat = true;
         invalidateOptionsMenu();
         myConfigs.set("man","hastam");
@@ -426,6 +478,8 @@ public class MainActivity extends AppCompatActivity {
         }else{
             stopMyService();
         }
+        mEditor.putString("loginInit", "ok");
+        mEditor.apply();
 
     }
 
@@ -491,11 +545,60 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
     //region private methods
+    private void baseLoop(){
+
+
+
+        if(isAnyUserSelect){
+            if(isAnyUserSelectOnline){
+                online_imgv.setImageDrawable(getDrawable(R.drawable.ledg));
+                online_txttv.setText(getString(R.string.lng_online));
+                online_txttv.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
+            }else{
+                online_imgv.setImageDrawable(getDrawable(R.drawable.ledr));
+                online_txttv.setText(getString(R.string.lng_offline));
+                online_txttv.setTextColor(ContextCompat.getColor(getContext(), R.color.gray));
+            }
+            if(isAnyUserSelectSeen && isAnyUserSelectOnline){
+                seen_imgv.setImageDrawable(getDrawable(R.drawable.ledg));
+                seen_txttv.setText(getString(R.string.lng_seen));
+                seen_txttv.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
+            }else{
+                seen_imgv.setImageDrawable(getDrawable(R.drawable.ledr));
+                seen_txttv.setText(getString(R.string.lng_unseen));
+                seen_txttv.setTextColor(ContextCompat.getColor(getContext(), R.color.gray));
+            }
+        }else {
+            online_imgv.setImageDrawable(getDrawable(R.drawable.ledoff));
+            seen_imgv.setImageDrawable(getDrawable(R.drawable.ledoff));
+            online_txttv.setText(getString(R.string.lng_offline));
+            online_txttv.setTextColor(ContextCompat.getColor(getContext(), R.color.gray));
+            seen_txttv.setText(getString(R.string.lng_unseen));
+            seen_txttv.setTextColor(ContextCompat.getColor(getContext(), R.color.gray));
+        }
+    }
     private void mainLoop(){
         if(!periodPerocess){
             mainLoopTry = 0;
-            mLivelog.singleRequest(3);
-            mLivelogTimer.startTimer();
+            if(isAnyUserSelect){
+                mLivelog.setParams("usrname","", "", "");
+                mLivelog.setValues(nameAnyUserSelect, "", "", "");
+                mLivelog.send1Params(5);
+                periodPerocess = true;
+            }else {
+                mLivelog.setParams("no","", "", "");
+                mLivelog.setValues("0", "", "", "");
+                mLivelog.send1Params(5);
+                periodPerocess = true;
+
+            }
+            if(mLivelogTimer.isTimerOn()){
+                mLivelogTimer.stopTimer();
+                mLivelogTimer.startTimer();
+            }else {
+                mLivelogTimer.startTimer();
+            }
+            Log.i("~~~~~~~LiveLog", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~LiveLog~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
         }else {
             mainLoopTry++;
             mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
@@ -503,27 +606,24 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if(!chatgetPerocess && mCounterGetchat>=100 && mCounterGetchat<103){
-
             getChatsRequest();
-        }else{
-
         }
 
-
+        //baseLoop();
     }
     private void mLivelogResponseCheck(){
-        if(mLivelog.get_isSingleRequestAns() && !mLivelog.get_ansSingleRequest().isEmpty()){
+        if(mLivelog.get_isSend1ParamAns() && !mLivelog.get_ansSend1Param().isEmpty()){
             Log.i("~~~~~~~LiveLog", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~LiveLog~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
             mLivelogTimer.stopTimer();
-            String isOk = mLivelog.get_ansSingleRequest();
-            if(isOk.equals("sqE")){
+            String isOk = mLivelog.get_ansSend1Param();
+            if(isOk.equals("p1Err")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt2));
                 Log.i("~~~~~~~LiveLog", "                                 sqE END                                try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
                 periodPerocess = false;
                 mainTimer.stopTimer();
                 mainTimer.startTimer();
-            }else if(isOk.equals("err")){
+            }else if(isOk.equals("error")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt3));
                 Log.i("~~~~~~~LiveLog", "                                 err END                                try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
@@ -533,23 +633,34 @@ public class MainActivity extends AppCompatActivity {
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt4));
                 notifCTS = isOk.substring(1,2);
                 cmdCTS = isOk.substring(0,1);
-                newchat = isOk.substring(2);
+                newchat = isOk.substring(2,3);//"00000"
+                String tempOnlin = isOk.substring(3,4);
+                String tempSeen = isOk.substring(4);
                 if(notifCTS.equals("1")){
+                    Log.i("???????????", "????????????????????????????????????????????????????????????????????? = " + isOk);
                     getNotif();
                 }else{
                     periodPerocess = false;
                 }
-
                 if(newchat.equals("1")){
                     if(!chatgetPerocess){
                         mCounterGetchat = 100;
-                    }else{
-
                     }
                 }
-
+                if(tempOnlin.equals("1")){
+                    isAnyUserSelectOnline = true;
+                }else{
+                    isAnyUserSelectOnline = false;
+                }
+                if(tempSeen.equals("0")){
+                    isAnyUserSelectSeen = true;
+                }else{
+                    isAnyUserSelectSeen = false;
+                }
             }
-            mLivelog.set_isSingleRequestAns(false);
+            mLivelog.set_isSend1ParamAns(false);
+
+
         }
     }
 
@@ -696,7 +807,7 @@ public class MainActivity extends AppCompatActivity {
                     chatgetPerocess = false;
                 }
             }
-
+            mGetChats.set_isSingleRequestAns(false);
 
 
         }
