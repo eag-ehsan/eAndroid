@@ -2,15 +2,23 @@ package com.ourartag.eandroid;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentContainerView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -33,6 +41,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,15 +50,21 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-
     //region class Objects
     private static Context mContext;
     public static Context getContext() {
         return mContext;
     }
+
     Toolbar mToolbar;
     TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait, nameAnyUserSelect_tv, online_txttv, seen_txttv;
     Button btn1, dlgOk;
@@ -77,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
     Intent mServiceIntent;
     private BackgroundLocationUpdateService mBackgroundLocationUpdateService;
     NotificationsUtils nNu;
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
     Item myItems;
     //endregion
 
@@ -85,6 +105,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        int permission = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
         //region Toolbar Cods
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -298,14 +330,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("---------", "--------------------------------------------------------------------------------------------------onResume");
         String tnppp = sharedPref.getString("loginInit", "no");
+        Log.i("---------", "--------------------------------------------------------------------------------------------------onResume" + tnppp);
         if(tnppp.equals("ok")){
             myConfigs.set("man","hastam");
             mEditor.putString("man", "hastam");
             mEditor.apply();
             //periodPerocess = false;
             if(!mainTimer.isTimerOn()){
+                Log.i("---------", "--------------------------------------------------------------------------------------------------onResume on" );
+                periodPerocess = false;
                 mainTimer.startTimer();
             }
             if(!baseTimer.isTimerOn()){
@@ -412,6 +446,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }else if(item.getItemId()==R.id.menu_refresh){
             mCounterGetchat = 100;
+            return true;
+        }else if(item.getItemId()==R.id.menu_sendtoserver){
+            Intent myIntent = new Intent(MainActivity.this, Sendtoserver.class);
+            myIntent.putExtra("key", "1"); //Optional parameters
+            MainActivity.this.startActivity(myIntent);
             return true;
         }else{
             return super.onOptionsItemSelected(item);
@@ -578,6 +617,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void mainLoop(){
+        Log.i ("|||||||||||||||||", "|||||||||||||||||||||||||||||||||||||| main loop");
         if(!periodPerocess){
             mainLoopTry = 0;
             if(isAnyUserSelect){
@@ -843,7 +883,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-//endregion
+    //endregion
+
+
 
 
 }

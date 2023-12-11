@@ -1,12 +1,28 @@
 package com.ourartag.eandroid;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +30,31 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Switch;
+import android.widget.Toast;
+
+import com.android.volley.toolbox.HttpResponse;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -22,6 +62,54 @@ import android.widget.Switch;
  * create an instance of this fragment.
  */
 public class Mysetting extends Fragment implements View.OnClickListener {
+
+
+
+    //region for image upload
+    Button GetImageFromGalleryButton, UploadImageOnServerButton;
+
+    ImageView ShowSelectedImage;
+
+    EditText imageName;
+
+    Bitmap FixBitmap;
+
+    String ImageTag = "image_tag" ;
+
+    String ImageName = "image_data" ;
+
+    ProgressDialog progressDialog ;
+
+    ByteArrayOutputStream byteArrayOutputStream ;
+
+    byte[] byteArray ;
+
+    String ConvertImage ;
+
+    String GetImageNameFromEditText;
+
+    HttpURLConnection httpURLConnection ;
+
+    URL url;
+
+    OutputStream outputStream;
+
+    BufferedWriter bufferedWriter ;
+
+    int RC ;
+
+    BufferedReader bufferedReader ;
+
+    StringBuilder stringBuilder;
+
+    boolean check = true;
+
+    private int GALLERY = 1, CAMERA = 2;
+
+    //endregion
+
+
+
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -34,9 +122,10 @@ public class Mysetting extends Fragment implements View.OnClickListener {
     private Button btnSetting_Save, btnSetting_Cancel;
     private View view;
     private Switch sw;
+
+    private String mFileImagePath;
     Config myConfigs;
     EditText serverAsTSave;
-
     public Mysetting() {
         // Required empty public constructor
     }
@@ -68,8 +157,12 @@ public class Mysetting extends Fragment implements View.OnClickListener {
         }
         myConfigs = new Config();
         myServerAddress = myConfigs.get("myServerAddress", "");
+
+
+
     }
 
+    @SuppressLint("WrongThread")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -109,12 +202,63 @@ public class Mysetting extends Fragment implements View.OnClickListener {
             }
         });
         // Inflate the layout for this fragment
+
+
+
+
+
+
+
+
+
+        //region for image upload
+        GetImageFromGalleryButton =(Button) view.findViewById(R.id.buttonSelect);
+
+        UploadImageOnServerButton = (Button) view.findViewById(R.id.buttonUpload);
+
+        ShowSelectedImage = (ImageView) view.findViewById(R.id.imageView);
+
+        imageName= (EditText) view.findViewById(R.id.imageName);
+
+        byteArrayOutputStream = new ByteArrayOutputStream();
+
+        GetImageFromGalleryButton.setOnClickListener(this);
+
+
+        UploadImageOnServerButton.setOnClickListener(this);
+
+        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{android.Manifest.permission.CAMERA},
+                        5);
+            }
+        }
+
+        //endregion
+
         return view;
 
     }
 
     @Override
     public void onClick(View v) {
+
+        //region for image upload
+        if(v.getId()==R.id.buttonSelect){
+            showPictureDialog();
+        }
+        if(v.getId()==R.id.buttonUpload){
+            GetImageNameFromEditText = imageName.getText().toString();
+
+            try {
+                UploadImageToServer();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+        //endregion
+
         if(v.getId()==R.id.setting_cancel_btn){
             FragmentManager fm = getParentFragmentManager();
             FragmentTransaction fragmentTransaction = fm.beginTransaction();
@@ -135,4 +279,105 @@ public class Mysetting extends Fragment implements View.OnClickListener {
             ((MainActivity)getActivity()).turnOffFrag();
         }
     }
+
+
+    //region for image upload
+    private void showPictureDialog(){
+        AlertDialog.Builder pictureDialog = new AlertDialog.Builder(getContext());
+        pictureDialog.setTitle("Select Action");
+        String[] pictureDialogItems = {
+                "Photo Gallery",
+                "Camera" };
+        pictureDialog.setItems(pictureDialogItems,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case 0:
+                                choosePhotoFromGallary();
+                                break;
+                            case 1:
+                                takePhotoFromCamera();
+                                break;
+                        }
+                    }
+                });
+        pictureDialog.show();
+    }
+
+    public void choosePhotoFromGallary() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+        startActivityForResult(galleryIntent, GALLERY);
+    }
+
+    private void takePhotoFromCamera() {
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, CAMERA);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_CANCELED) {
+            return;
+        }
+        if (requestCode == GALLERY) {
+            if (data != null) {
+                Uri contentURI = data.getData();
+                mFileImagePath = contentURI.getPath();
+                Log.i("pppppppppp", "popopopoopopooopo" + mFileImagePath);
+                try {
+                    FixBitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), contentURI);
+                    // String path = saveImage(bitmap);
+                    //Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+                    ShowSelectedImage.setImageBitmap(FixBitmap);
+                    UploadImageOnServerButton.setVisibility(View.VISIBLE);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getContext(), "Failed!", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        } else if (requestCode == CAMERA) {
+            FixBitmap = (Bitmap) data.getExtras().get("data");
+            ShowSelectedImage.setImageBitmap(FixBitmap);
+            UploadImageOnServerButton.setVisibility(View.VISIBLE);
+            //  saveImage(thumbnail);
+            //Toast.makeText(ShadiRegistrationPart5.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+        }
+    }
+    public void UploadImageToServer() throws IOException {
+
+        FixBitmap.compress(Bitmap.CompressFormat.JPEG, 40, byteArrayOutputStream);
+
+        byteArray = byteArrayOutputStream.toByteArray();
+
+        ConvertImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        //GetImageNameFromEditText
+
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 5) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Now user should be able to use camera
+
+            }
+            else {
+
+                Toast.makeText(getContext(), "Unable to use Camera..Please Allow us to use Camera", Toast.LENGTH_LONG).show();
+
+            }
+        }
+    }
+
+    //endregion
+
 }
