@@ -29,7 +29,7 @@ android {
 }
 
 dependencies {
-
+    implementation 'com.squareup.picasso:picasso:2.5.2'
     implementation 'androidx.work:work-runtime:2.9.0'
     implementation 'neshan-android-sdk:mobile-sdk:1.0.3'
     implementation 'neshan-android-sdk:services-sdk:1.0.0'

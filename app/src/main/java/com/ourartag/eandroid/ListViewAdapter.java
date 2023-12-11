@@ -52,36 +52,22 @@ public class ListViewAdapter extends ArrayAdapter<Item> {
         zirerootV.setBackgroundColor(currentItem.getbgColor_t());
 
 
-        TextView title = listItem.findViewById(R.id.label);
-        TextView mmsg = listItem.findViewById(R.id.mainMessages);
-        mmsg.setBackgroundColor(currentItem.getbgColor_m());
-        title.setTextColor(currentItem.gettxtColor_t());
 
+
+        TextView title = listItem.findViewById(R.id.label);
+        title.setTextColor(currentItem.gettxtColor_t());
         title.setMinLines(currentItem.getlineNumber_t());
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
-        float dp = currentItem.gettxtSize_dp_t();
-        Resources r = getContext().getResources();
-        float px = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                dp,
-                r.getDisplayMetrics()
-        );
-        float fpixels = px;
-        fpixels = metrics.density * dp;
-        int pixels = (int) (fpixels + 0.5f);
-        //pixels = convertDpToPixel(dp, getContext());
-        title.setTextSize( pixels);
+        title.setTextSize((int) convertDpToPixel(currentItem.gettxtSize_dp_t(), getContext()));
         title.setText(currentItem.getTitle());
         title.setTypeface(null, currentItem.gettxtStyle_t());
 
+
+        TextView mmsg = listItem.findViewById(R.id.mainMessages);
+        mmsg.setBackgroundColor(currentItem.getbgColor_m());
         mmsg.setTextColor(currentItem.gettxtColor_m());
         mmsg.setText(currentItem.getMainMessage());
         mmsg.setMinLines(currentItem.getlineNumber_m());
-
-        dp = currentItem.gettxtSize_dp_m();
-        fpixels = metrics.density * dp;
-        pixels = (int) (fpixels + 0.5f);
-        mmsg.setTextSize(pixels);
+        mmsg.setTextSize((int) convertDpToPixel(currentItem.gettxtSize_dp_m(), getContext()));
         mmsg.setTypeface(null, currentItem.gettxtStyle_m());
 
 

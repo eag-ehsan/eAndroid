@@ -37,6 +37,18 @@
             android:layout_height="wrap_content"
             android:src="@drawable/address_card_20" />
 
+        <ImageView
+            android:id="@+id/imgfromurl_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/ee" />
+
+        <Button
+            android:id="@+id/getfromurl_btn_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Button" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

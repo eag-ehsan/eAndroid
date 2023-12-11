@@ -55,7 +55,7 @@
             android:exported="true"
             android:screenOrientation="portrait"
             android:supportsRtl="true"
-            android:windowSoftInputMode="stateVisible">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

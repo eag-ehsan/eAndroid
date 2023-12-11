@@ -14,11 +14,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.app.ActivityManager;
 import android.app.Application;
-import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -33,12 +30,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -46,16 +46,11 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TabHost;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -92,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     Intent mServiceIntent;
     private BackgroundLocationUpdateService mBackgroundLocationUpdateService;
     NotificationsUtils nNu;
+    LinearLayout mRooteroot, mPanelbala;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -99,14 +95,18 @@ public class MainActivity extends AppCompatActivity {
     };
     Item myItems;
     //endregion
-
+    public static float dpToPx(Context context, float valueInDp) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
+    }
     //region Overrides
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext = this;
 
-
+        //region permission check
         int permission = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
@@ -117,6 +117,19 @@ public class MainActivity extends AppCompatActivity {
                     REQUEST_EXTERNAL_STORAGE
             );
         }
+        int permissionread = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        if (permissionread != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+
+        //endregion
+
         //region Toolbar Cods
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -126,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         //endregion
 
         //region Class get Objrcts
-        mContext = this;
+
         nNu = new NotificationsUtils(getApplicationContext());
         if(!nNu.isNotificationEnabled()){
             Intent settingsIntent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
@@ -154,6 +167,24 @@ public class MainActivity extends AppCompatActivity {
         //endregion
 
         //region findViewById
+        mRooteroot = findViewById(R.id.rooteroot);
+        mPanelbala = findViewById(R.id.panelbala_id);
+        final View activityRootView = findViewById(R.id.rooteroot);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
+                if (heightDiff > dpToPx(mContext, 200)) { // if more than 200 dp, it's probably a keyboard...
+                    Log.e("oooo","open");
+                    mainAppStatus.setVisibility(View.GONE);
+                    mPanelbala.setVisibility(View.GONE);
+
+                }else{
+                    mainAppStatus.setVisibility(View.VISIBLE);
+                    mPanelbala.setVisibility(View.VISIBLE);
+                }
+            }
+        });
         dlgPage = findViewById(R.id.dialogPage);
         dialogMsg = findViewById(R.id.vtxtDialogMsg);
         myFrag1 = findViewById(R.id.fragmentContainerView);

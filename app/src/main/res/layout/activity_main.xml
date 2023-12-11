@@ -6,7 +6,9 @@
     android:layout_height="match_parent"
     android:background="#A1EAFD"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:id="@+id/rooteroot"
+    >
 
 
     <LinearLayout
@@ -233,6 +235,7 @@
                 android:paddingBottom="6dp">
 
                 <LinearLayout
+                    android:id="@+id/panelbala_id"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="13"
@@ -295,11 +298,10 @@
                             android:id="@+id/online_txtid"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="2dp"
                             android:layout_weight="0"
                             android:text="@string/lng_online"
-                            android:layout_marginHorizontal="2dp"
-                            android:textColor="@color/light_bg2"
-                            />
+                            android:textColor="@color/light_bg2" />
 
                         <ImageView
                             android:id="@+id/online_imgid"
