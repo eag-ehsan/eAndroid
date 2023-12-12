@@ -75,8 +75,8 @@ public class Sendtoserver extends AppCompatActivity {
         mContext = this;
         // Change color of action bar
 
-        myConfigs = new Config();
-        myServerAddress = myConfigs.get("myServerAddress", "");
+        myConfigs = new Config(this);
+        myServerAddress = myConfigs.get_myServerAddress();
         preview = (ImageView) findViewById(R.id.nouvelle_annonce_step3_phototaken_preview);
         mImgfromurl = (ImageView) findViewById(R.id.imgfromurl_id);
         btnCreate = (Button) findViewById(R.id.nouvelle_annonce_step3_btn) ;

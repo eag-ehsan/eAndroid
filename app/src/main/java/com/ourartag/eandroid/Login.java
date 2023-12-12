@@ -42,6 +42,7 @@ public class Login extends Fragment implements View.OnClickListener{
     SharedPreferences.Editor mEditor;
     private LinearLayout dlgPage;
     private Config myConfigs;
+
     public Login() {
         // Required empty public constructor
     }
@@ -74,9 +75,8 @@ public class Login extends Fragment implements View.OnClickListener{
         myusr0 = new myVolley(getContext());
         sharedPref = getContext().getSharedPreferences("ourartag.com", Context.MODE_PRIVATE);
         mEditor = sharedPref.edit();
-        myConfigs = new Config();
-        myConfigs = new Config();
-        myServerAddress = myConfigs.get("myServerAddress", "");
+        myConfigs = new Config(getContext());
+        myServerAddress = myConfigs.get_myServerAddress();
         loginproc = "";
     }
 
@@ -103,8 +103,8 @@ public class Login extends Fragment implements View.OnClickListener{
         titleLogin = (TextView) view.findViewById(R.id.textView);
 
 
-        txtNameLogin.setText(myConfigs.get("myName",""));
-        txtPassLogin.setText(myConfigs.get("myPass",""));
+        txtNameLogin.setText(myConfigs.get_myName());
+        txtPassLogin.setText(myConfigs.get_myPass());
         return view;
     }
 
@@ -209,13 +209,14 @@ public class Login extends Fragment implements View.OnClickListener{
             }else if(isOk.substring(0,2).equals("ok")){
                 String isID = isOk.substring(2);
                 int tmpit = Integer.parseInt(isID);
-                myConfigs.set("myID",tmpit + "");
-                myConfigs.set("myName",txtNameLogin.getText().toString());
-                myConfigs.set("myPass",txtPassLogin.getText().toString());
+                myConfigs.set_myID(tmpit + "");
+                myConfigs.set_myName(txtNameLogin.getText().toString());
+                myConfigs.set_myPass(txtPassLogin.getText().toString());
                 myusr0.set_isSend2ParamAns(false);
                 timer1000.stopTimer();
                 dialogMsg.setText(getString(R.string.lng_login_txt4));
-                myConfigs.set("isLogin","1");
+                mEditor.putString("isLogin", "1");
+                mEditor.apply();
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 loginproc = "lgnok";
                 dlgPage.setVisibility(View.VISIBLE);

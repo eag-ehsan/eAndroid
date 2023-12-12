@@ -11,11 +11,13 @@
     <color name="dark_bg1">#75004E</color>
     <color name="dark_bg2">#023771</color>
     <color name="dark_bg3">#000823</color>
+    <color name="dark_bg7">#0A3901</color>
     <color name="dark_bg4">#710202</color>
     <color name="dark_bg5">#230000</color>
     <color name="dark_bg6">#01327A</color>
     <color name="light_bg1">#B3F0FB</color>
     <color name="light_bg2">#E0F6FB</color>
+    <color name="light_bg3">#FDFAED</color>
     <color name="light_text1">#E6FFEA</color>
     <color name="light_text2">#FDEFEF</color>
     <color name="header_footer_bg">#231001</color>

@@ -44,7 +44,7 @@ public class BackgroundLocationUpdateService  extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        myServerAddress = myConfigs.get("myServerAddress", "");
+        myServerAddress = myConfigs.get_myServerAddress();
         startTimer();
 
         setnotif2("eAndroid - Ehsan Ahmadi", "Chat Notification is ON", 2727);
@@ -57,7 +57,7 @@ public class BackgroundLocationUpdateService  extends Service {
         stopService = false;
 
 
-        if(myConfigs.get("bgService","off").equals("on")){
+        if(myConfigs.get_bgService().equals("on")){
             Intent broadcastIntent = new Intent();
             broadcastIntent.setAction("restartservice");
             broadcastIntent.setClass(this, Restarter.class);
@@ -70,16 +70,16 @@ public class BackgroundLocationUpdateService  extends Service {
     public void onCreate() {
         super.onCreate();
         context = this;
-        SERVICE_MAIN_LOOP_S = 7;
+        SERVICE_MAIN_LOOP_S = 4;
         stopService = false;
         channelName = getString(R.string.site_Address_quick);
         mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         sharedPref = context.getSharedPreferences(getString(R.string.site_Address_quick), Context.MODE_PRIVATE);
         mEditor = sharedPref.edit();
         myID = sharedPref.getString("myID", "0");
-        myConfigs = new Config();
+        myConfigs = new Config(this);
         if(myID.equals("0")){
-            myID = myConfigs.get("myID","0");
+            myID = myConfigs.get_myID();
         }
 
         myMan = sharedPref.getString("man", "");
@@ -87,7 +87,7 @@ public class BackgroundLocationUpdateService  extends Service {
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
         mLivelog = new myVolley(this);
         mLivelog.setmyID(myID);
-        myServerAddress = myConfigs.get("myServerAddress", "");
+        myServerAddress = myConfigs.get_myServerAddress();
         mLivelog.setStarterUrl(myServerAddress + "livee.php?liivx=");
         periodPerocess = false;
 
@@ -174,7 +174,7 @@ public class BackgroundLocationUpdateService  extends Service {
         myTtimer.startTimer();
     }
     public void runrun(){
-        if(myConfigs.get("bgService","").equals("off")){
+        if(myConfigs.get_bgService().equals("off")){
             myTtimer.stopTimer();
         }
         myMan = sharedPref.getString("man", "");

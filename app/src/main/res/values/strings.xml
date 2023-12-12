@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">eAndroid</string>
+    <string name="app_verr">V2.2.0012</string>
     <!-- TODO: Remove or change this placeholder text -->
 
     <string name="menu_sendtoserver">Send Files</string>
@@ -58,6 +59,11 @@
     <string name="lng_offline">Offline</string>
     <string name="lng_selectusr">Select a User</string>
     <string name="lng_notyourself">not yourself</string>
+    <string name="lng_err_save_img">Error in saving image to Gallery</string>
+    <string name="lng_ok_save_img">Image Saved</string>
+    <string name="lng_send">Send</string>
+    <string name="lng_Browse">Browse</string>
+    <string name="lng_listv_txt1">Open Image </string>
 
     <!--
                     <string name="menu_sendtoserver">ارسال فایل</string>
@@ -114,6 +120,11 @@
                     <string name="lng_unseen">ندیده</string>
                     <string name="lng_offline">آفلاین</string>
                     <string name="lng_selectusr">یکی را انتخاب کن</string>
-                    <string name="lng_notyourself">خودت را نه</string>-->
+                    <string name="lng_notyourself">خودت را نه</string>
+                    <string name="lng_err_save_img">بروز خطا در ذخیره عکس</string>
+                    <string name="lng_ok_save_img">ذخیره شد</string>
+                    <string name="lng_send">ارسال</string>
+                    <string name="lng_Browse">انتخاب فایل دیگر</string>
+                    <string name="lng_listv_txt1">عکس را باز کن</string>-->
 
 </resources>

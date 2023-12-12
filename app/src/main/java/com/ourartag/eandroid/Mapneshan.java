@@ -64,6 +64,7 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
     private MapView map;
     private Marker marker;
     private Config myConfigs;
+    esTimer baseTimer;
     public Mapneshan() {
         // Required empty public constructor
     }
@@ -94,7 +95,7 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
-        myConfigs = new Config();
+        myConfigs = new Config(getContext());
     }
 
     @Override
@@ -114,8 +115,20 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
         map.moveCamera(new LatLng(35.767234, 51.330743), 0);
         map.setZoom(14, 0);
         map.getSettings().setZoomControlsEnabled(true);
+        baseTimer = new esTimer(new Runnable() {public void run() {baseLoop();}}, 10, 6000, false);
 
         return view;
+    }
+    public void baseLoop(){
+        getLastLocation();
+        map.setZoom(14, 0);
+        Float temfll = Float.valueOf(latitudeText);
+        Float tempfln = Float.valueOf(longitudeText);
+//                map.getSettings().setZoomControlsEnabled(true);
+        addUserMarker(new LatLng(temfll, tempfln));
+
+//                map.addMarker(createMarker(latlng));
+        map.moveCamera(new LatLng(temfll, tempfln), .5f);
     }
     private void addUserMarker(LatLng loc) {
         //remove existing marker from map
@@ -143,6 +156,7 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
     @Override
     public void onClick(View v) {
         if(v.getId()==R.id.mapBack){
+            baseTimer.stopTimer();
             FragmentManager fm = getParentFragmentManager();
             FragmentTransaction fragmentTransaction = fm.beginTransaction();
             fragmentTransaction.remove(Mapneshan.this).commit();
@@ -157,6 +171,7 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
 
 //                map.addMarker(createMarker(latlng));
             map.moveCamera(new LatLng(temfll, tempfln), .5f);
+            baseTimer.startTimer();
         }
     }
 
@@ -182,8 +197,8 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
                         } else {
                             latitudeText = location.getLatitude() + "";
                             longitudeText = location.getLongitude() + "";
-                            myConfigs.set("myLati",latitudeText);
-                            myConfigs.set("myLani",longitudeText);
+                            myConfigs.set_myLati(latitudeText);
+                            myConfigs.set_myLoni(longitudeText);
 
                         }
                     }
@@ -224,8 +239,8 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
             Location mLastLocation = locationResult.getLastLocation();
             latitudeText = mLastLocation.getLatitude() + "";
             longitudeText = mLastLocation.getLongitude() + "";
-            myConfigs.set("myLati",latitudeText);
-            myConfigs.set("myLani",longitudeText);
+            myConfigs.set_myLati(latitudeText);
+            myConfigs.set_myLoni(longitudeText);
         }
     };
 

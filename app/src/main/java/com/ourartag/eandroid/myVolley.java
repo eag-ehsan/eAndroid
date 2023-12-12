@@ -19,10 +19,11 @@ public class myVolley {
     private Boolean isSingleRequestAns, isSend1ParamAns, isSend2ParamAns, isSend4ParamAns;
     private String ansSingleRequest, ansSend1Param, ansSend2Param, ansSend4Param;
     Config myConfigs;
-
+    Context mContext;
     public myVolley(Context context){
-        myConfigs = new Config();
-        myServerAddress = myConfigs.get("myServerAddress", "");
+        mContext = context;
+        myConfigs = new Config(mContext);
+        myServerAddress = myConfigs.get_myServerAddress();
         isSingleRequestAns = false;
         ansSingleRequest = "";
         isSend2ParamAns = false;
@@ -78,6 +79,7 @@ public class myVolley {
 
     public void singleRequest(int outLenght) {
         String uurl = myStartUrl + myID;
+        uurl = uurl.replaceAll(" ", "%20");
         Log.i("~~~~~~~~single", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
@@ -123,6 +125,7 @@ public class myVolley {
 
     public void send1Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1;
+        uurl = uurl.replaceAll(" ", "%20");
         Log.i("~~~~~~~~send1P", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
@@ -165,6 +168,7 @@ public class myVolley {
 
     public void send2Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1 + "&" + mParam2 + "=" + mValue2;
+        uurl = uurl.replaceAll(" ", "%20");
         Log.i("~~~~~~~~send2P", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
@@ -205,6 +209,7 @@ public class myVolley {
 
     public void send4Params(int outLenght) {
         String uurl = myStartUrl + myID + "&" + mParam1 + "=" + mValue1 + "&" + mParam2 + "=" + mValue2 + "&" + mParam3 + "=" + mValue3 + "&" + mParam4 + "=" + mValue4;
+        uurl = uurl.replaceAll(" ", "%20");
         Log.i("~~~~~~~~send4P", uurl);
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,

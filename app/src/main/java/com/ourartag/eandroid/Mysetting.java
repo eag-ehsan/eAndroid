@@ -155,8 +155,8 @@ public class Mysetting extends Fragment implements View.OnClickListener {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        myConfigs = new Config();
-        myServerAddress = myConfigs.get("myServerAddress", "");
+        myConfigs = new Config(getContext());
+        myServerAddress = myConfigs.get_myServerAddress();
 
 
 
@@ -182,7 +182,7 @@ public class Mysetting extends Fragment implements View.OnClickListener {
 //        }else{
 //            sw.setChecked(false);
 //        }
-        if(myConfigs.get("bgService","").equals("on")){
+        if(myConfigs.get_bgService().equals("on")){
             sw.setChecked(true);
         }else{
             sw.setChecked(false);
@@ -190,11 +190,11 @@ public class Mysetting extends Fragment implements View.OnClickListener {
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    myConfigs.set("bgService","on");
+                    myConfigs.set_bgService("on");
                     //myConfigs.set("isLogin","1");
                     //Log.i("$$$$$$$$$$$$", "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ isLogin 1");
                 } else {
-                    myConfigs.set("bgService","off");
+                    myConfigs.set_bgService("off");
                     //myConfigs.set("isLogin","0");
                     //myConfigs.set("myPass","0");
                     //Log.i("$$$$$$$$$$$$", "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ isLogin 0");
@@ -266,8 +266,8 @@ public class Mysetting extends Fragment implements View.OnClickListener {
             ((MainActivity)getActivity()).turnOffFrag();
         }
         if(v.getId()==R.id.setting_save_btn){
-            myConfigs.set("myServerAddress",serverAsTSave.getText().toString());
-            if(myConfigs.get("bgService","off").equals("off")){
+            myConfigs.set_myServerAddress(serverAsTSave.getText().toString());
+            if(myConfigs.get_bgService().equals("off")){
                 ((MainActivity)getActivity()).stopMyService();
             }else{
                 ((MainActivity)getActivity()).sureServiceisStarting();

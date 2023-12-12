@@ -4,10 +4,10 @@ import android.graphics.Typeface;
 
 class Item {
 
-    private int mPicture;
-    private String mTitle, mMaintext;
+    private int mPicture, mBigimageP;
+    private String mTitle, mMaintext, mImgUrl;
 
-    private Boolean mIsImage;
+    private Boolean mIsImage, mIsBigImage;
 
     private int mBgColot_t, mTxtColor_t, mLineNumber_t;
 
@@ -21,14 +21,14 @@ class Item {
 
     private int mTxtStyle_m;
 
-    int getPicture() {
-        return mPicture;
-    }
+
 
     Item(int picture, String title, String mainmsg, Boolean isImage,
          int bgColor_t, int txtColor_t, int lineNumber_t, float txtSize_dp_t, int txtStyle_t,
-         int bgColor_m, int txtColor_m, int lineNumber_m, float txtSize_dp_m, int txtStyle_m) {
+         int bgColor_m, int txtColor_m, int lineNumber_m, float txtSize_dp_m, int txtStyle_m, Boolean isBigImage, String imgUtl,
+         int bigImagePicture) {
         mPicture = picture;
+        mBigimageP = bigImagePicture;
         mTitle = title;
         mIsImage = isImage;
 
@@ -45,19 +45,30 @@ class Item {
         mLineNumber_m = lineNumber_m;
         mTxtSize_dp_m = txtSize_dp_m;
         mTxtStyle_m = txtStyle_m;
+        mIsBigImage = isBigImage;
+        mImgUrl = imgUtl;
     }
-
+    int getPicture() {
+        return mPicture;
+    }
+    int getbigPicture() {
+        return mBigimageP;
+    }
     String getTitle() {
         return mTitle;
     }
     String getMainMessage() {
         return mMaintext;
     }
-
+    String getimgUrl() {
+        return mImgUrl;
+    }
     Boolean getisImage() {
         return mIsImage;
     }
-
+    Boolean getisBigImage() {
+        return mIsBigImage;
+    }
     int getbgColor_t() {
         return mBgColot_t;
     }

@@ -11,6 +11,13 @@
     >
 
 
+    <ImageView
+        android:id="@+id/tumbnail_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ee"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/please_wait_for_login_id"
         android:layout_width="match_parent"
@@ -355,37 +362,40 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="0.1" />
+
 
             <EditText
                 android:id="@+id/txtChatToSend"
                 style="@style/Vazir"
-                android:layout_width="wrap_content"
-                android:layout_height="33dp"
-                android:layout_weight="0.5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="80"
                 android:background="#FFFFFF"
-                android:ems="10"
+                android:layout_marginLeft="6dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
                 android:inputType="text"
-                android:minHeight="25dp"
-                android:textSize="14sp"
+
+                android:textSize="16dp"
                 tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
                 android:id="@+id/sendBtn"
-                android:layout_width="35dp"
-                android:layout_height="33dp"
-                android:layout_weight="0.1"
-                android:background="#5FC7FF"
-                android:src="@drawable/paper_plane_30"
-                app:tint="#0047BF" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="10"
+                android:background="@color/header_footer_bg"
+                android:src="@drawable/paper_plane_28"
+                app:tint="@color/light_bg1" />
+            <ImageButton
+                android:id="@+id/sendImageBtn_id"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="10"
+                android:background="@color/header_footer_bg"
+                android:src="@drawable/paperclip_28"
+                app:tint="@color/light_bg1" />
 
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="0.1" />
         </LinearLayout>
 
     </LinearLayout>

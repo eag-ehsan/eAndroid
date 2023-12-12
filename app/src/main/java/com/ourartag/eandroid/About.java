@@ -2,22 +2,14 @@ package com.ourartag.eandroid;
 
 import android.os.Bundle;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Bundle;
-
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 /**
  * A simple {@link Fragment} subclass.
@@ -36,6 +28,7 @@ public class About extends Fragment implements View.OnClickListener{
     private String mParam2;
     private Button btnBack;
     private View view;
+    private TextView verrr;
     public About() {
         // Required empty public constructor
     }
@@ -73,6 +66,8 @@ public class About extends Fragment implements View.OnClickListener{
         view = inflater.inflate(R.layout.fragment_about, container, false);
         btnBack = (Button) view.findViewById(R.id.backBtnAbout);
         btnBack.setOnClickListener(this);
+        verrr = (TextView) view.findViewById(R.id.verrr);
+        verrr.setText("eAndroid" + getString(R.string.app_verr));
         // Inflate the layout for this fragment
         return view;
     }
