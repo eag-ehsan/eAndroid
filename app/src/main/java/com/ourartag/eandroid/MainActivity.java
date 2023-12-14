@@ -9,11 +9,12 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentContainerView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.OrientationHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -43,48 +44,40 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.squareup.picasso.Picasso;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    protected final BetterActivityResult<Intent, ActivityResult> activityLauncher = BetterActivityResult.registerActivityForResult(this);
-    //region class Objects
-    private static Context mContext;
-    public static Context getContext() {
-        return mContext;
-    }
 
+    //region class Objects
+    protected final BetterActivityResult<Intent, ActivityResult> activityLauncher = BetterActivityResult.registerActivityForResult(this);
+    ArrayList<Model> mList;
+    RecyclerView mRecyclerView;
+    MultiViewTypeAdapter adapter;
     Toolbar mToolbar;
     TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait, nameAnyUserSelect_tv, online_txttv, seen_txttv;
     Button btn1, dlgOk;
+    FloatingActionButton btn_mainFab1, btn_mainFab2, btn_mainFab3, btn_mainFab4, btn_mainFab5, btn_mainFab6;
     LinearLayout dlgPage, mPleaseWaitLinl;
     MenuItem about_menu, logout_menu, setting_menu, sendloc_menu, refresh_menu;
-    ListView mainListView;
     ImageButton sendBotton, sendImageButton;
     ImageView online_imgv, seen_imgv, myTumbnail;
     FragmentContainerView myFrag1;
     esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
-    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect;
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, lastChatdt;
     myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats, myusr0;
 
     SharedPreferences sharedPref;
@@ -94,26 +87,37 @@ public class MainActivity extends AppCompatActivity {
     int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
-    ArrayList<Item> items;
 
-    ListViewAdapter adapter;
+
+
     MediaPlayer mMediaPlayer;
     Intent mServiceIntent;
     private BackgroundLocationUpdateService mBackgroundLocationUpdateService;
     NotificationsUtils nNu;
     LinearLayout mRooteroot, mPanelbala;
 
+
+
+    //endregion
+
+    //region static items
+    private static Context mContext;
+    public static Context getContext() {
+        return mContext;
+    }
+
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
-    Item myItems;
-    //endregion
     public static float dpToPx(Context context, float valueInDp) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
     }
+    //endregion
+
+    //region ask permission functions
     public boolean askForFilePermissions() {
         if (Build.VERSION.SDK_INT >= 23) {
             boolean hasPermission = this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
@@ -144,6 +148,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    //endregion
+
     //region Overrides
 
     @Override
@@ -237,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
         dlgOk = findViewById(R.id.dialogOK);
         mainAppStatus = findViewById(R.id.mainAppStatus);
         textViewRespoNotif = findViewById(R.id.txtResponotif);
-        mainListView = findViewById(R.id.main_list);
+
         sendBotton = findViewById(R.id.sendBtn);
         sendImageButton = findViewById(R.id.sendImageBtn_id);
         txtChatForSend = findViewById(R.id.txtChatToSend);
@@ -249,51 +256,19 @@ public class MainActivity extends AppCompatActivity {
         online_txttv = findViewById(R.id.online_txtid);
         seen_txttv = findViewById(R.id.seen_txtid);
         myTumbnail = findViewById(R.id.tumbnail_id);
+        btn_mainFab1 = (FloatingActionButton) findViewById(R.id.main_fab1);
+        btn_mainFab2 = (FloatingActionButton) findViewById(R.id.main_fab2);
+        btn_mainFab3 = (FloatingActionButton) findViewById(R.id.main_fab3);
+        btn_mainFab4 = (FloatingActionButton) findViewById(R.id.main_fab4);
+        btn_mainFab5 = (FloatingActionButton) findViewById(R.id.main_fab5);
+        btn_mainFab6 = (FloatingActionButton) findViewById(R.id.main_fab6);
+
 
         //endregion
 
-        //region ListView setup
-        items = new ArrayList<>();
-        adapter = new ListViewAdapter(this, items);
-        mainListView.setAdapter(adapter);
-        mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                // TODO Auto-generated method stub
-                nameAnyUserSelect = items.get(position).getTitle();
-                if(!nameAnyUserSelect.isEmpty()){
 
-                    if(nameAnyUserSelect.equals(myName)){
-                        nameAnyUserSelect_tv.setText(getString(R.string.lng_selectusr) + " " + getString(R.string.lng_notyourself));
-                        isAnyUserSelect = false;
-                    }else{
-                        nameAnyUserSelect_tv.setText(nameAnyUserSelect);
-                        isAnyUserSelect = true;
-                    }
-                }else{
-                    isAnyUserSelect = false;
 
-                }
-                Boolean tmpBooli = items.get(position).getisBigImage();
-                if(tmpBooli){
-                    myFrag1.setVisibility(View.VISIBLE);
-                    Fragment mViewImageFullscreen = new ViewImageFullscreen(items.get(position).getimgUrl());
-                    FragmentManager fm = getSupportFragmentManager();
-                    FragmentTransaction fragmentTransaction = fm.beginTransaction();
-                    fragmentTransaction.replace(R.id.fragmentContainerView, mViewImageFullscreen);
-                    fragmentTransaction.commit();
-                }
-
-                
-                //items.remove(position);
-
-                //adapter.notifyDataSetChanged();
-            }
-        });
-
-        //endregion
-
-        //region HomeWatcher
+        //region Intefaces
         HomeWatcher mHomeWatcher = new HomeWatcher(this);
         mHomeWatcher.setOnHomePressedListener(new OnHomePressedListener() {
             @Override
@@ -307,6 +282,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         mHomeWatcher.startWatch();
+
+
+
         //endregion
 
         //region Configs
@@ -349,6 +327,54 @@ public class MainActivity extends AppCompatActivity {
         nameAnyUserSelect = "";
         getModcounter = 0;
         iduserSeenNewChat = false;
+        lastChatdt = "";
+        //endregion
+
+        //region recyclerview setup
+        mList= new ArrayList();
+//        mList.add(new Model(Model.TEXT_TYPE, R.drawable.d4, "Ehsan Ahmadi", getString(R.string.lng_login_txt1), ""));
+//        mList.add(new Model(Model.IMAGE_TYPE,R.drawable.d4, "Dorsa", "", myServerAddress + "upload/2_1702396287700.jpg"));
+//        mList.add(new Model(Model.AUDIO_TYPE, R.raw.fart, "Dorsa", "", ""));
+
+
+        adapter = new MultiViewTypeAdapter(mList,this);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
+        adapter.setOnItemClickListener(new RecyclerViewClickListener(){
+
+            @Override
+            public void recyclerViewListClicked(View v, int position) {
+                nameAnyUserSelect = mList.get(position).getTitle();
+                if(!nameAnyUserSelect.isEmpty()){
+
+                    if(nameAnyUserSelect.equals(myName)){
+                        nameAnyUserSelect_tv.setText(getString(R.string.lng_selectusr) + " " + getString(R.string.lng_notyourself));
+                        isAnyUserSelect = false;
+                    }else{
+                        nameAnyUserSelect_tv.setText(nameAnyUserSelect);
+                        isAnyUserSelect = true;
+                    }
+                }else{
+                    isAnyUserSelect = false;
+
+                }
+                String tmpBooli = mList.get(position).getImageURL();
+                if(!tmpBooli.isEmpty()){
+                    myFrag1.setVisibility(View.VISIBLE);
+                    Fragment mViewImageFullscreen = new ViewImageFullscreen(tmpBooli);
+                    FragmentManager fm = getSupportFragmentManager();
+                    FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                    fragmentTransaction.replace(R.id.fragmentContainerView, mViewImageFullscreen);
+                    fragmentTransaction.commit();
+                }
+
+            }
+        });
+        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        mRecyclerView.setLayoutManager(linearLayoutManager);
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.setAdapter(adapter);
+
+
         //endregion
 
         //region setOnClickListeners
@@ -383,6 +409,58 @@ public class MainActivity extends AppCompatActivity {
                 //sendImageButton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.gray));
             }
         });
+        btn_mainFab1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                myFrag1.setVisibility(View.VISIBLE);
+                Fragment mMysetting = new Mysetting();
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                fragmentTransaction.replace(R.id.fragmentContainerView, mMysetting);
+                fragmentTransaction.commit();
+            }
+        });
+        btn_mainFab2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                lastChatdt = "";
+                removeAllItemsFromListview();
+                mCounterGetchat = 100;
+            }
+        });
+        btn_mainFab3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent myIntent = new Intent(MainActivity.this, BrowsAllImages.class);
+                MainActivity.this.startActivity(myIntent);
+            }
+        });
+        btn_mainFab4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                myFrag1.setVisibility(View.VISIBLE);
+                Fragment mMapneshan = new Mapneshan();
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                fragmentTransaction.replace(R.id.fragmentContainerView, mMapneshan);
+                fragmentTransaction.commit();
+            }
+        });
+        btn_mainFab5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+        btn_mainFab6.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent myIntent = new Intent(MainActivity.this, BrowseImageForSend.class);
+                MainActivity.this.startActivity(myIntent);
+            }
+        });
+
+
         //endregion
 
         //region Auto login
@@ -625,7 +703,7 @@ public class MainActivity extends AppCompatActivity {
         mSetChat.setmyID(myID);
         mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
         mGetChats.setmyID(myID);
-        mGetChats.setStarterUrl(myServerAddress + "getchats.php?liivx=");
+        mGetChats.setStarterUrl(myServerAddress + "getchats2.php?liivx=");
         mainTimer.startTimer();
         baseTimer.startTimer();
         menu_stat = true;
@@ -649,7 +727,7 @@ public class MainActivity extends AppCompatActivity {
     public void stopMyService(){
         stopService(new Intent(MainActivity.this, BackgroundLocationUpdateService.class));
     }
-    public void setChatToListView(String txtTitle, String txtMessage) {
+    public void setChatToRecyclerview(String txtTitle, String txtMessage, String dtdt) {
         Boolean temp_itischat = false;
         //Log.e("in","---------------------------" + txtMessage);
         if(txtMessage.length()>10){
@@ -665,47 +743,19 @@ public class MainActivity extends AppCompatActivity {
         if(temp_itischat){
             String[] echitems = txtMessage.split(" ");
             String filen = echitems[2].replace(" ", "");
-            items.add(new Item(R.drawable.d3,
-                    txtTitle + " - " + getString(R.string.lng_listv_txt1) ,"",
-                    true,
-                    ContextCompat.getColor(getContext(), R.color.dark_bg6),
-                    ContextCompat.getColor(getContext(), R.color.light_text2),
-                    1,
-                    7f,
-                    Typeface.BOLD,
-                    ContextCompat.getColor(getContext(), R.color.light_bg2),
-                    ContextCompat.getColor(getContext(), R.color.black),
-                    3,
-                    7.5f,
-                    Typeface.NORMAL,
-                    true,
-                    myServerAddress + "upload/" + filen,
-                    R.drawable.my_custom_background));
+            mList.add(new Model(Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen));
         }else{
-            items.add(new Item(R.drawable.d3,
-                    txtTitle,txtMessage,
-                    true,
-                    ContextCompat.getColor(getContext(), R.color.light_bg2),
-                    ContextCompat.getColor(getContext(), R.color.black),
-                    1,
-                    8f,
-                    Typeface.BOLD,
-                    ContextCompat.getColor(getContext(), R.color.light_bg3),
-                    ContextCompat.getColor(getContext(), R.color.black),
-                    2,
-                    8.5f,
-                    Typeface.NORMAL,
-                    false,
-                    "",
-                    R.drawable.my_custom_background));
+            mList.add(new Model(Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, ""));
+
         }
+        mRecyclerView.setAdapter(adapter);
+        //mRecyclerView.smoothScrollToPosition(mList.size()-1);
+        mRecyclerView.scrollToPosition(mList.size()-1);
 
-
-        adapter.notifyDataSetChanged();
     }
     public void removeAllItemsFromListview(){
-        items.clear();
-        adapter.notifyDataSetChanged();
+        mList.clear();
+        mRecyclerView.setAdapter(adapter);
     }
 
     public void playAlarmSound()  {
@@ -1007,20 +1057,30 @@ public class MainActivity extends AppCompatActivity {
                     aslStr = completeresp.substring(53, b);
                     String[] echitems = aslStr.split(";");
                     int ii=0, hh=0;
-                    String tempstrName, tempstrMsg;
-                    removeAllItemsFromListview();
-                    for(ii=(echitems.length-1);ii>=0;ii--){
-                        hh = echitems[ii].indexOf(">");
-                        tempstrName = echitems[ii].substring(0,hh);
-                        tempstrMsg = echitems[ii].substring(hh+1);
-                        setChatToListView(tempstrName, tempstrMsg);
-                        String mman = sharedPref.getString("man", "");
-                        if(mman.equals("oftadam")){
-                            iduserSeenNewChat = false;
-                        }else{
-                            iduserSeenNewChat = true;
-                        }
+                    String[] wholemsgfortest = echitems[0].split(">");
+                    if(!wholemsgfortest[1].equals(lastChatdt)){
+                        String tempstrName, tempstrMsg, tempstrdatetime;
+                        removeAllItemsFromListview();
+                        for(ii=(echitems.length-1);ii>=0;ii--){
+                            String[] wholemsg = echitems[ii].split(">");
+                            tempstrName = wholemsg[0];
+                            tempstrdatetime = wholemsg[1];
+                            tempstrMsg = wholemsg[2];
+                            //hh = echitems[ii].indexOf(">");
+                            //tempstrName = echitems[ii].substring(0,hh);
+                            //tempstrMsg = echitems[ii].substring(hh+1);
+                            setChatToRecyclerview(tempstrName, tempstrMsg, tempstrdatetime);
+                            lastChatdt = tempstrdatetime;
 
+
+                        }
+                    }
+
+                    String mman = sharedPref.getString("man", "");
+                    if(mman.equals("oftadam")){
+                        iduserSeenNewChat = false;
+                    }else{
+                        iduserSeenNewChat = true;
                     }
                     chatgetPerocess = false;
                 }else{

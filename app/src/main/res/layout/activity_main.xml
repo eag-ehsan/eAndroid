@@ -342,12 +342,91 @@
                     android:layout_weight="87"
                     android:orientation="vertical">
 
-                    <ListView
-                        android:id="@+id/main_list"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:stackFromBottom="true"
-                        android:transcriptMode="alwaysScroll"/>
+                        android:orientation="horizontal">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerView"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="90" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="500dp"
+                            android:layout_weight="10"
+                            android:gravity="center_horizontal|center_vertical"
+                            android:orientation="vertical">
+
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/main_fab1"
+                                android:layout_width="70dp"
+                                android:layout_height="35dp"
+                                app:fabCustomSize="35dp"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/gear_50"
+                                android:tint="#FFFFFF" />
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/main_fab2"
+                                android:layout_width="70dp"
+                                android:layout_height="35dp"
+                                app:fabCustomSize="35dp"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/arrows_rotate_50"
+                                android:tint="#FFFFFF" />
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/main_fab3"
+                                android:layout_width="70dp"
+                                android:layout_height="35dp"
+                                app:fabCustomSize="37dp"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/gallery_thumbnails_50"
+                                android:tint="#FFFFFF" />
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/main_fab4"
+                                android:layout_width="70dp"
+                                android:layout_height="35dp"
+                                app:fabCustomSize="35dp"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/location_smile"
+                                android:tint="#FFFFFF" />
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/main_fab5"
+                                android:layout_width="70dp"
+                                android:layout_height="35dp"
+                                app:fabCustomSize="35dp"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/volume_50"
+                                android:tint="#FFFFFF" />
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/main_fab6"
+                                android:layout_width="70dp"
+                                android:layout_height="35dp"
+                                app:fabCustomSize="35dp"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/paperclip_50"
+                                android:tint="#FFFFFF" />
+                        </LinearLayout>
+                    </LinearLayout>
+
                 </LinearLayout>
             </LinearLayout>
 
@@ -387,6 +466,7 @@
                 android:background="@color/header_footer_bg"
                 android:src="@drawable/paper_plane_28"
                 app:tint="@color/light_bg1" />
+
             <ImageButton
                 android:id="@+id/sendImageBtn_id"
                 android:layout_width="0dp"
@@ -394,6 +474,7 @@
                 android:layout_weight="10"
                 android:background="@color/header_footer_bg"
                 android:src="@drawable/paperclip_28"
+                android:visibility="gone"
                 app:tint="@color/light_bg1" />
 
         </LinearLayout>

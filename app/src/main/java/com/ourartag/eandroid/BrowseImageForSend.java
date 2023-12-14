@@ -9,6 +9,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,6 +19,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -112,6 +114,7 @@ public class BrowseImageForSend extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_browse_image_for_send);
+
         mContext = this;
         myConfigs = new Config(this);
         myServerAddress = myConfigs.get_myServerAddress();
@@ -305,6 +308,8 @@ public class BrowseImageForSend extends AppCompatActivity {
     }
     public void openCameraActivityForResult() {
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+
+
         activityLauncher.launch(intent, result -> {
             if (result.getResultCode() == Activity.RESULT_OK) {
                 // There are no request codes

@@ -11,11 +11,13 @@ import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import android.Manifest;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,7 +58,7 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    private Button btnBack, btnGoMe;
+    private Button btnBack, btnGoMe, btnSendtoServer;
     private View view;
     private FusedLocationProviderClient mFusedLocationClient;
     private String latitudeText, longitudeText;
@@ -65,6 +67,8 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
     private Marker marker;
     private Config myConfigs;
     esTimer baseTimer;
+    myVolley mSendToServer;
+    esTimer mSendToServerTimer;
     public Mapneshan() {
         // Required empty public constructor
     }
@@ -96,6 +100,31 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
         }
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
         myConfigs = new Config(getContext());
+        mSendToServer = new myVolley(getContext());
+        mSendToServer.setmyID(myConfigs.get_myID());
+        mSendToServer.setStarterUrl(myConfigs.get_myServerAddress() + "setp.php?liivx=");
+        mSendToServerTimer = new esTimer(new Runnable() {public void run() {sendlotoserverCheck();}}, 10, 1000, false);
+    }
+    private void sendlotoserver(){
+        mSendToServer.setParams("p1","v1", "p2", "v2");
+        mSendToServer.setValues("lastlat", latitudeText, "lastlon", longitudeText);
+        mSendToServer.send4Params(2);
+        mSendToServerTimer.startTimer();
+    }
+    private void sendlotoserverCheck(){
+        if(mSendToServer.get_isSend4ParamAns() && !mSendToServer.get_ansSend4Param().isEmpty()){
+            mSendToServerTimer.stopTimer();
+            String isOk = mSendToServer.get_ansSend4Param();
+            if(isOk.equals("ok")){
+                btnSendtoServer.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.okcolor2));
+
+
+            }else{
+                btnSendtoServer.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.errcolo2));
+            }
+            btnSendtoServer.setEnabled(true);
+            mSendToServer.set_isSend4ParamAns(false);
+        }
     }
 
     @Override
@@ -107,6 +136,8 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
         btnBack.setOnClickListener(this);
         btnGoMe = (Button) view.findViewById(R.id.mapGoOnMe);
         btnGoMe.setOnClickListener(this);
+        btnSendtoServer = (Button) view.findViewById(R.id.mapSendToServer);
+        btnSendtoServer.setOnClickListener(this);
         latitudeText = "35.767234";
         longitudeText = "51.330743";
         map = view.findViewById(R.id.map);
@@ -171,7 +202,14 @@ public class Mapneshan extends Fragment implements View.OnClickListener, Locatio
 
 //                map.addMarker(createMarker(latlng));
             map.moveCamera(new LatLng(temfll, tempfln), .5f);
-            baseTimer.startTimer();
+            if(!latitudeText.equals("35.767234")){
+                btnSendtoServer.setEnabled(true);
+            }
+
+            //baseTimer.startTimer();
+        }else if(v.getId()==R.id.mapSendToServer){
+            sendlotoserver();
+            btnSendtoServer.setEnabled(false);
         }
     }
 

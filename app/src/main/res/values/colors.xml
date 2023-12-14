@@ -6,8 +6,10 @@
     <color name="white">#FFFFFFFF</color>
     <color name="toolicolor">#7C3002</color>
     <color name="errcolo">#FF0000</color>
+    <color name="errcolo2">#810101</color>
     <color name="warcolor">#F7FF00</color>
     <color name="okcolor">#6AFF00</color>
+    <color name="okcolor2">#2E7000</color>
     <color name="dark_bg1">#75004E</color>
     <color name="dark_bg2">#023771</color>
     <color name="dark_bg3">#000823</color>

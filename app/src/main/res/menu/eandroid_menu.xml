@@ -26,8 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:icon="@drawable/gear_20"
-        android:title="@string/lng_Setting"
-        app:showAsAction="ifRoom" />
+        android:title="@string/lng_Setting" />
     <item
         android:id="@+id/menu_sendtoserver"
         android:layout_width="wrap_content"
