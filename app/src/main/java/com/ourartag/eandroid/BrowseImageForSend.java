@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -16,12 +17,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -60,11 +64,12 @@ public class BrowseImageForSend extends AppCompatActivity {
     File destination;
     String imagePath;
     ImageButton takePhoto;
+    private ImageButton rotateBtnn;
     Button btn_b_brows, btn_n_send, btn_b_back;
     Config myConfigs;
     myVolley mSetChat;
     esTimer mSetChatTimer;
-    int serverResponseCode = 0, tryToSendChat = 3, countertrysend = 0;
+    int serverResponseCode = 0, tryToSendChat = 3, countertrysend = 0, currentAngle = 0;
     ProgressDialog dialog = null;
     private int GALLERY = 1, CAMERA = 2;
     String upLoadServerUri = null, myServerAddress;
@@ -123,6 +128,9 @@ public class BrowseImageForSend extends AppCompatActivity {
         btn_b_brows = findViewById(R.id.btn_brows_browsimg_id);
         btn_n_send = findViewById(R.id.btn_send_browsimg_id);
         preview = findViewById(R.id.img_send_browsimg_id);
+
+        rotateBtnn = findViewById(R.id.rotate_forsend_id);
+
         mSetChat = new myVolley(this);
         mSetChat.setmyID(myConfigs.get_myID());
         mSetChat.setStarterUrl(myConfigs.get_myServerAddress() + "setchat.php?liivx=");
@@ -131,6 +139,13 @@ public class BrowseImageForSend extends AppCompatActivity {
                 sendChatToServerCheck();
             }
         }, 10, 1000, false);
+        rotateBtnn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                roateImage(preview);
+            }
+        });
+
         btn_b_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -185,7 +200,100 @@ public class BrowseImageForSend extends AppCompatActivity {
             showPictureDialog();
         }
 
+        preview.setOnTouchListener(new View.OnTouchListener() {
+            Matrix matrix = new Matrix();
+            Matrix savedMatrix = new Matrix();
+            int mode = NONE;
+            static final int NONE = 0;
+            static final int DRAG = 1;
+            static final int ZOOM = 2;
+            // these PointF objects are used to record the point(s) the user is touching
+            PointF start = new PointF();
+            PointF mid = new PointF();
+            float oldDist = 1f;
+            @SuppressLint("ClickableViewAccessibility")
+            public boolean onTouch(View v, MotionEvent event) {
+                //Log.e(TAG, "newDist===========================================================================================");
+                ImageView view = (ImageView) v;
+                view.setScaleType(ImageView.ScaleType.MATRIX);
+                float scale;
+
+                dumpEvent(event);
+                // Handle touch events here...
+
+                switch (event.getAction() & MotionEvent.ACTION_MASK)
+                {
+                    case MotionEvent.ACTION_DOWN:   // first finger down only
+                        matrix.set(view.getImageMatrix());
+                        savedMatrix.set(matrix);
+                        start.set(event.getX(), event.getY());
+                        Log.e("====", "mode=DRAG"); // write to LogCat
+                        mode = DRAG;
+                        break;
+
+                    case MotionEvent.ACTION_UP: // first finger lifted
+
+                    case MotionEvent.ACTION_POINTER_UP: // second finger lifted
+
+                        mode = NONE;
+                        Log.e("====", "mode=NONE");
+                        break;
+
+                    case MotionEvent.ACTION_POINTER_DOWN: // first and second finger down
+
+                        oldDist = spacing(event);
+                        Log.e("====", "oldDist=" + oldDist);
+                        if (oldDist > 5f) {
+                            savedMatrix.set(matrix);
+                            midPoint(mid, event);
+                            mode = ZOOM;
+                            Log.e("====", "mode=ZOOM");
+                        }
+                        break;
+
+                    case MotionEvent.ACTION_MOVE:
+
+                        if (mode == DRAG)
+                        {
+                            matrix.set(savedMatrix);
+                            matrix.postTranslate(event.getX() - start.x, event.getY() - start.y); // create the transformation in the matrix  of points
+                        }
+                        else if (mode == ZOOM)
+                        {
+                            // pinch zooming
+                            float newDist = spacing(event);
+                            Log.e("====", "newDist=" + newDist);
+                            if (newDist > 5f)
+                            {
+                                matrix.set(savedMatrix);
+                                scale = newDist / oldDist; // setting the scaling of the
+                                // matrix...if scale > 1 means
+                                // zoom in...if scale < 1 means
+                                // zoom out
+                                matrix.postScale(scale, scale, mid.x, mid.y);
+                            }
+                        }
+                        break;
+                }
+
+                view.setImageMatrix(matrix); // display the transformation on screen
+
+
+                return true;
+            }
+        });
     }
+    private void roateImage(ImageView imageView) {
+        currentAngle +=90;
+        if(currentAngle == 360){ currentAngle = 0;}
+        Matrix matrix = new Matrix();
+        imageView.setScaleType(ImageView.ScaleType.MATRIX); //required
+        matrix.postRotate((float) currentAngle, imageView.getDrawable().getBounds().width()/4,    imageView.getDrawable().getBounds().height()/4);
+        //matrix.postRotate((float) currentAngle);
+        //matrix.preRotate(currentAngle);
+        imageView.setImageMatrix(matrix);
+    }
+
     private boolean checkPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -491,4 +599,55 @@ public class BrowseImageForSend extends AppCompatActivity {
 
 
     }
+    private float spacing(MotionEvent event)
+    {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
+    }
+
+    /*
+     * --------------------------------------------------------------------------
+     * Method: midPoint Parameters: PointF object, MotionEvent Returns: void
+     * Description: calculates the midpoint between the two fingers
+     * ------------------------------------------------------------
+     */
+
+    private void midPoint(PointF point, MotionEvent event)
+    {
+        float x = event.getX(0) + event.getX(1);
+        float y = event.getY(0) + event.getY(1);
+        point.set(x / 2, y / 2);
+    }
+
+    /** Show an event in the LogCat view, for debugging */
+    private void dumpEvent(MotionEvent event)
+    {
+        String names[] = { "DOWN", "UP", "MOVE", "CANCEL", "OUTSIDE","POINTER_DOWN", "POINTER_UP", "7?", "8?", "9?" };
+        StringBuilder sb = new StringBuilder();
+        int action = event.getAction();
+        int actionCode = action & MotionEvent.ACTION_MASK;
+        sb.append("event ACTION_").append(names[actionCode]);
+
+        if (actionCode == MotionEvent.ACTION_POINTER_DOWN || actionCode == MotionEvent.ACTION_POINTER_UP)
+        {
+            sb.append("(pid ").append(action >> MotionEvent.ACTION_POINTER_ID_SHIFT);
+            sb.append(")");
+        }
+
+        sb.append("[");
+        for (int i = 0; i < event.getPointerCount(); i++)
+        {
+            sb.append("#").append(i);
+            sb.append("(pid ").append(event.getPointerId(i));
+            sb.append(")=").append((int) event.getX(i));
+            sb.append(",").append((int) event.getY(i));
+            if (i + 1 < event.getPointerCount())
+                sb.append(";");
+        }
+
+        sb.append("]");
+        Log.d("Touch Events ---------", sb.toString());
+    }
+
 }

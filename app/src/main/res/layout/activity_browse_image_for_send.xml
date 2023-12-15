@@ -9,19 +9,43 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center_horizontal"
         android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/light_text1"
+            android:gravity="center_vertical|end"
+            android:orientation="horizontal">
+
+
+
+            <ImageButton
+                android:id="@+id/rotate_forsend_id"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:backgroundTint="@color/light_bg2"
+                android:src="@drawable/camera_rotate_35"
+                android:layout_marginRight="15dp"
+                app:tint="@color/dark_bg7" />
+
+
+
+
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/img_send_browsimg_id"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="93"
-            android:src="@drawable/my_chat_bg2" />
+            android:layout_weight="60"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ee" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="7"
+            android:layout_weight="30"
             android:orientation="horizontal">
 
             <Button

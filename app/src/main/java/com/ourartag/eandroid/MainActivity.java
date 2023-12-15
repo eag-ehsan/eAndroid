@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.OrientationHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -25,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -34,6 +36,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -54,37 +57,48 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     //region class Objects
     protected final BetterActivityResult<Intent, ActivityResult> activityLauncher = BetterActivityResult.registerActivityForResult(this);
+    ProgressDialog dialog = null;
     ArrayList<Model> mList;
     RecyclerView mRecyclerView;
     MultiViewTypeAdapter adapter;
     Toolbar mToolbar;
-    TextView toolbarTxtVeiw, dialogMsg, ourartaglink, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait, nameAnyUserSelect_tv, online_txttv, seen_txttv;
+    TextView ourartaglink;
+    myVolley mNotifreg, mSetNotifCTX;
+    TextView toolbarTxtVeiw, dialogMsg, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait, nameAnyUserSelect_tv, online_txttv, seen_txttv, txt_record_alert;
     Button btn1, dlgOk;
-    FloatingActionButton btn_mainFab1, btn_mainFab2, btn_mainFab3, btn_mainFab4, btn_mainFab5, btn_mainFab6;
+    FloatingActionButton btn_mainFab1, btn_mainFab2, btn_mainFab3, btn_mainFab4, btn_mainFab5, btn_mainFab6, btn_fabPlay, btn_fabCancel;
     LinearLayout dlgPage, mPleaseWaitLinl;
     MenuItem about_menu, logout_menu, setting_menu, sendloc_menu, refresh_menu;
     ImageButton sendBotton, sendImageButton;
     ImageView online_imgv, seen_imgv, myTumbnail;
     FragmentContainerView myFrag1;
     esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
-    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, lastChatdt;
-    myVolley mLivelog, mNotifreg, mSetNotifCTX, mSetChat, mGetChats, myusr0;
-
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, lastChatdt, pathapp, upLoadVoiceServerUri;
+    myVolley mLivelog, mSetChat, mGetChats, myusr0;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
     Config myConfigs;
-    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen, iduserSeenNewChat;
-    int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, TRY_T0_GET_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter;
+    MediaRecorder recorder;
+    MediaPlayer mPlayer;
+    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen, iduserSeenNewChat, permissionTpRecVoice;
+    private boolean fabStateRecord = false, fabStatePlay = false;
+    int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
 
@@ -148,6 +162,41 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
+
+    private void requestAudioPermissions() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            //When permission is not granted by user, show them message why this permission is needed.
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.RECORD_AUDIO)) {
+                Toast.makeText(this, "Please grant permissions to record audio", Toast.LENGTH_LONG).show();
+
+                //Give user option to still opt-in the permissions
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        MY_PERMISSIONS_RECORD_AUDIO);
+
+            } else {
+                // Show user dialog to grant permission to record audio
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        MY_PERMISSIONS_RECORD_AUDIO);
+            }
+        }
+        //If permission is granted, then go ahead recording audio
+        else if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            permissionTpRecVoice = true;
+
+        }
+    }
+
+
 
     //endregion
 
@@ -201,9 +250,10 @@ public class MainActivity extends AppCompatActivity {
                     .putExtra(Settings.EXTRA_CHANNEL_ID, 2727);
             startActivity(settingsIntent);
         }
+
         mLivelog = new myVolley(this);
-        mNotifreg = new myVolley(this);
-        mSetNotifCTX = new myVolley(this);
+        //mNotifreg = new myVolley(this);
+        //mSetNotifCTX = new myVolley(this);
         mSetChat = new myVolley(this);
         mGetChats = new myVolley(this);
         myusr0 = new myVolley(this);
@@ -212,8 +262,8 @@ public class MainActivity extends AppCompatActivity {
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
         baseTimer = new esTimer(new Runnable() {public void run() {baseLoop();}}, 10, 500, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
-        mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
-        mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
+        //mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
+        //mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
         mSetChatTimer = new esTimer(new Runnable() {public void run() {sendChatToServerCheck();}}, 10, 1000, false);
         mGetChatsTimer = new esTimer(new Runnable() {public void run() {getChatsRequestCheck();}}, 10, 1000, false);
         myusr0Timer = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 10, 1000, false);
@@ -262,11 +312,10 @@ public class MainActivity extends AppCompatActivity {
         btn_mainFab4 = (FloatingActionButton) findViewById(R.id.main_fab4);
         btn_mainFab5 = (FloatingActionButton) findViewById(R.id.main_fab5);
         btn_mainFab6 = (FloatingActionButton) findViewById(R.id.main_fab6);
-
-
+        btn_fabPlay = (FloatingActionButton) findViewById(R.id.fabPlayvoce);
+        btn_fabCancel = (FloatingActionButton) findViewById(R.id.fabVoiceCancel);
+        txt_record_alert = findViewById(R.id.txtRecordAlert);
         //endregion
-
-
 
         //region Intefaces
         HomeWatcher mHomeWatcher = new HomeWatcher(this);
@@ -312,6 +361,8 @@ public class MainActivity extends AppCompatActivity {
         //endregion
 
         //region defualt values
+        upLoadVoiceServerUri = myServerAddress + "upvoice.php";
+        pathapp =  "/data/data/com.ourartag.eandroid/" ;
         menu_stat = false;
         periodPerocess = false;
         chatgetPerocess = false;
@@ -328,6 +379,7 @@ public class MainActivity extends AppCompatActivity {
         getModcounter = 0;
         iduserSeenNewChat = false;
         lastChatdt = "";
+        permissionTpRecVoice = false;
         //endregion
 
         //region recyclerview setup
@@ -368,6 +420,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             }
+
+            @Override
+            public void rVClicked_delete(View v, int position) {
+
+            }
         });
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         mRecyclerView.setLayoutManager(linearLayoutManager);
@@ -391,10 +448,37 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 //setChatToListView(myName, txtChatForSend.getText().toString());
-                isAnyUserSelectSeen = false;
-                sendChatToServer(txtChatForSend.getText().toString());
-                sendBotton.setEnabled(false);
-                sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.gray));
+
+                if(txt_record_alert.getVisibility()==View.VISIBLE){
+                    if(fabStatePlay){
+                        mPlayer.stop();
+                        mPlayer.release();
+                        mPlayer = null;
+                        fabStatePlay = false;
+                        btn_fabPlay.setImageResource(R.drawable.volume_50);
+                    }
+                    dialog = ProgressDialog.show(MainActivity.this, "", "Uploading file...", true);
+                    //String ttt = Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/ourartag/tr2.3gp";
+                    String ttt = pathapp + "tr2.3gp";
+
+                    new Thread(new Runnable() {
+                        public void run() {
+                            String tmyID = myConfigs.get_myID();
+                            uploadVoiceFile(ttt, myID);
+
+                        }
+                    }).start();
+
+                }else{
+                    isAnyUserSelectSeen = false;
+                    if(!txtChatForSend.getText().toString().isEmpty()){
+                        sendChatToServer(txtChatForSend.getText().toString());
+                        sendBotton.setEnabled(false);
+                        sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.gray));
+                    }
+
+                }
+
             }
         });
         sendImageButton.setOnClickListener(new View.OnClickListener() {
@@ -449,7 +533,44 @@ public class MainActivity extends AppCompatActivity {
         btn_mainFab5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                requestAudioPermissions();
+                if(permissionTpRecVoice){
+                    if(!fabStateRecord){
+                        btn_mainFab5.setImageResource(R.drawable.microphone_slash_50);
+                        txtChatForSend.setVisibility(View.GONE);
+                        sendBotton.setVisibility(View.GONE);
+                        txt_record_alert.setVisibility(View.VISIBLE);
+                        txt_record_alert.setText(getString(R.string.lng_record_alert));
+                        txt_record_alert.setTextColor(ContextCompat.getColor(getContext(),R.color.errcolo));
+                        fabStateRecord = true;
+                        recorder = new MediaRecorder();
+                        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                        //String ttt = Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/ourartag/tr2.3gp";
+                        String ttt = pathapp + "tr2.3gp";
+                        recorder.setOutputFile(ttt);
+                        try {
+                            recorder.prepare();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        recorder.start();
+                    }else {
+                        btn_mainFab5.setImageResource(R.drawable.microphone_50);
+                        fabStateRecord = false;
 
+                        recorder.stop();
+                        recorder.release();
+                        recorder = null;
+                        sendBotton.setVisibility(View.VISIBLE);
+                        btn_fabCancel.setVisibility(View.VISIBLE);
+                        btn_fabPlay.setVisibility(View.VISIBLE);
+                        txt_record_alert.setVisibility(View.VISIBLE);
+                        txt_record_alert.setText(getString(R.string.lng_record_prev));
+                        txt_record_alert.setTextColor(ContextCompat.getColor(getContext(),R.color.okcolor));
+                    }
+                }
             }
         });
         btn_mainFab6.setOnClickListener(new View.OnClickListener() {
@@ -459,8 +580,51 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.startActivity(myIntent);
             }
         });
+        btn_fabPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(fabStatePlay){
+                    mPlayer.stop();
+                    mPlayer.release();
+                    mPlayer = null;
+                    fabStatePlay = false;
+                    btn_fabPlay.setImageResource(R.drawable.volume_50);
+                }else {
+                    try {
+                        //String ttt = Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/ourartag/tr2.3gp";
+                        String ttt = pathapp + "tr2.3gp";
+                        //Uri uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
+                        mPlayer = new MediaPlayer();
+                        //mPlayer = MediaPlayer.create(getContext(), uri);
+                        mPlayer.setDataSource(ttt);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        mPlayer.prepare();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    mPlayer.setLooping(true);
+                    mPlayer.start();
+                    btn_fabPlay.setImageResource(R.drawable.volume_xmark_50);
+                    fabStatePlay = true;
+                }
 
 
+            }
+        });
+        btn_fabCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                txtChatForSend.setVisibility(View.VISIBLE);
+                btn_fabCancel.setVisibility(View.GONE);
+                btn_fabPlay.setVisibility(View.GONE);
+                txt_record_alert.setVisibility(View.GONE);
+
+
+            }
+        });
         //endregion
 
         //region Auto login
@@ -495,6 +659,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
         //endregion
+
 
     }
 
@@ -665,134 +830,6 @@ public class MainActivity extends AppCompatActivity {
     }
     //endregion
 
-    //region public methods
-
-
-    public Boolean isNetworkAvailable(Application application) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Network nw = connectivityManager.getActiveNetwork();
-            if (nw == null) return false;
-            NetworkCapabilities actNw = connectivityManager.getNetworkCapabilities(nw);
-            return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
-        } else {
-            NetworkInfo nwInfo = connectivityManager.getActiveNetworkInfo();
-            return nwInfo != null && nwInfo.isConnected();
-        }
-    }
-
-    public void turnOffFrag(){
-        myFrag1.setVisibility(View.GONE);
-    }
-
-    public void loginInit(){
-        myID = myConfigs.get_myID();
-        myName = myConfigs.get_myName();
-        mEditor.putString("myID", myID);
-        mEditor.putString("myName", myName);
-        mEditor.apply();
-        toolbarTxtVeiw.setText(myName);
-        myFrag1.setVisibility(View.GONE);
-        mLivelog.setmyID(myID);
-
-        mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
-        mNotifreg.setmyID(myID);
-        mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
-        mSetNotifCTX.setmyID(myID);
-        mSetNotifCTX.setStarterUrl(myServerAddress + "setp.php?liivx=");
-        mSetChat.setmyID(myID);
-        mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
-        mGetChats.setmyID(myID);
-        mGetChats.setStarterUrl(myServerAddress + "getchats2.php?liivx=");
-        mainTimer.startTimer();
-        baseTimer.startTimer();
-        menu_stat = true;
-        invalidateOptionsMenu();
-        myConfigs.set_man("hastam");
-        mEditor.putString("man", "hastam");
-        mEditor.apply();
-        mEditor.putString("isLogin", "1");
-        mEditor.apply();
-        if(myServiceEnable){
-            sureServiceisStarting();
-        }else{
-            stopMyService();
-        }
-        mEditor.putString("loginInit", "ok");
-        mEditor.apply();
-
-
-    }
-
-    public void stopMyService(){
-        stopService(new Intent(MainActivity.this, BackgroundLocationUpdateService.class));
-    }
-    public void setChatToRecyclerview(String txtTitle, String txtMessage, String dtdt) {
-        Boolean temp_itischat = false;
-        //Log.e("in","---------------------------" + txtMessage);
-        if(txtMessage.length()>10){
-            if(txtMessage.substring(0,3).equals("IMG")){
-
-                temp_itischat = true;
-            }else {
-                temp_itischat=false;
-            }
-        }else {
-            temp_itischat=false;
-        }
-        if(temp_itischat){
-            String[] echitems = txtMessage.split(" ");
-            String filen = echitems[2].replace(" ", "");
-            mList.add(new Model(Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen));
-        }else{
-            mList.add(new Model(Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, ""));
-
-        }
-        mRecyclerView.setAdapter(adapter);
-        //mRecyclerView.smoothScrollToPosition(mList.size()-1);
-        mRecyclerView.scrollToPosition(mList.size()-1);
-
-    }
-    public void removeAllItemsFromListview(){
-        mList.clear();
-        mRecyclerView.setAdapter(adapter);
-    }
-
-    public void playAlarmSound()  {
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
-        mp.start();
-    }
-    public void sureServiceisStarting(){
-        Boolean ympbool = isMyServiceRunning(mBackgroundLocationUpdateService.getClass());
-        if(!ympbool){
-            mServiceIntent = new Intent(MainActivity.this, mBackgroundLocationUpdateService.getClass());
-
-            if (!isMyServiceRunning(mBackgroundLocationUpdateService.getClass())) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    getApplicationContext().startForegroundService(new Intent(getApplicationContext(), mBackgroundLocationUpdateService.getClass()));
-                } else {
-                    getApplicationContext().startService(new Intent(getApplicationContext(), mBackgroundLocationUpdateService.getClass()));
-                }
-                //startService(mServiceIntent);
-                Log.i("Count", "################## starting service");
-            }
-        }else{
-            Log.i("Count", "################## great. you are alive yourself");
-        }
-    }
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Running");
-                return true;
-            }
-        }
-        Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Not running");
-        return false;
-    }
-    //endregion
 
     //region private methods
     private void baseLoop(){
@@ -904,7 +941,7 @@ public class MainActivity extends AppCompatActivity {
                 String tempOnlin = isOk.substring(3,4);
                 String tempSeen = isOk.substring(4);
                 if(notifCTS.equals("1")){
-                    getNotif();
+                    //getNotif();
                 }else{
                     periodPerocess = false;
                 }
@@ -933,66 +970,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void getNotif(){
-        mNotifreg.singleRequest(180);
-        mNotifregTimer.startTimer();
-    }
-    private void getNotifCheck(){
-        if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
-            Log.i("~~~~~~getNotif", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getNotif~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-            mNotifregTimer.stopTimer();
-            String respo = mNotifreg.get_ansSingleRequest();
-            String isOk = respo.substring(0,6);
-            if(isOk.equals("sqErro")){
-                Log.i("~~~~~~getNotif", "                                 sqErro END                             try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-                long templng1 = mainTimer.getCurrentDuration();
-                if(templng1<((1000*MAIN_LOOP_SEC)/2)){
-                    getNotif();
-                }else{
-                    periodPerocess = false;
-                }
-            }else if(isOk.equals("cancel")){
-                periodPerocess = false;
-            }else if(isOk.equals("error!")){
-                periodPerocess = false;
-                
-            }else if(isOk.equals("<html>")){
-                String responotif = respo.substring(53);
-                textViewRespoNotif.setText(responotif);
-                setNotifCTXf();
-            }else{
-
-            }
-            mNotifreg.set_isSingleRequestAns(false);
-        }
-    }
-
-
-    private void setNotifCTXf(){
-        mSetNotifCTX.setParams("p1","v1", "p2", "v2");
-        mSetNotifCTX.setValues("notifCTS", "0", "notifCTR", "1");
-        mSetNotifCTX.send4Params(2);
-        mSetNotifCTXTimer.startTimer();
-    }
-    private void setNotifCTXcheck(){
-        if(mSetNotifCTX.get_isSend4ParamAns() && !mSetNotifCTX.get_ansSend4Param().isEmpty()){
-            Log.i("~~~~~NotifCTXf", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NotifCTXf~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-            mNotifregTimer.stopTimer();
-            String isOk = mSetNotifCTX.get_ansSend4Param();
-            if(isOk.equals("ok")){
-                periodPerocess = false;
-
-            }else if(isOk.equals("p4")){
-                periodPerocess = false;
-            }else if(isOk.equals("er")){
-                periodPerocess = false;
-
-            }else{
-                periodPerocess = false;
-            }
-            mSetNotifCTX.set_isSend4ParamAns(false);
-        }
-    }
 
 
     private void sendChatToServer(String txtMessage) {
@@ -1069,7 +1046,13 @@ public class MainActivity extends AppCompatActivity {
                             //hh = echitems[ii].indexOf(">");
                             //tempstrName = echitems[ii].substring(0,hh);
                             //tempstrMsg = echitems[ii].substring(hh+1);
-                            setChatToRecyclerview(tempstrName, tempstrMsg, tempstrdatetime);
+                            Boolean mtisMe = false;
+                            if(tempstrName.equals(myName)){
+                                mtisMe = true;
+                            }else{
+                                mtisMe = false;
+                            }
+                            setChatToRecyclerview(mtisMe, tempstrName, tempstrMsg, tempstrdatetime);
                             lastChatdt = tempstrdatetime;
 
 
@@ -1126,49 +1109,337 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void setChatToRecyclerview(Boolean itsmee, String txtTitle, String txtMessage, String dtdt) {
+        Boolean temp_itischat = false;
+        Boolean temp_itischatvoc = false;
+        //Log.e("in","---------------------------" + txtMessage);
+        if(txtMessage.length()>10){
+            if(txtMessage.substring(0,3).equals("IMG")){
 
-    //endregion
+                temp_itischat = true;
+            }else if(txtMessage.substring(0,3).equals("VOC")){
 
-    public void saveImagetoStorage(String filenn, String titi){
-        BitmapDrawable draw = (BitmapDrawable) myTumbnail.getDrawable();
-        Bitmap bitmap = draw.getBitmap();
-
-        FileOutputStream outStream = null;
-
-        String folder_main = "Ourartag";
-
-        File f = new File(Environment.getExternalStorageDirectory(), folder_main);
-        if (!f.exists()) {
-            f.mkdirs();
+                temp_itischat = true;
+                temp_itischatvoc = true;
+            }else {
+                temp_itischat=false;
+            }
+        }else {
+            temp_itischat=false;
         }
-        String ttp = Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/" + folder_main;
-        String pathtoout = ttp + "/" + filenn;
-        File dir = new File(ttp);
-        Log.e("pp",ttp);
-        dir.mkdirs();
-        String fileName = String.format(filenn);
-        File outFile = new File(dir, fileName);
+        if(temp_itischat){
+            if(temp_itischatvoc){
+                String[] echitems = txtMessage.split(" ");
+                String filen = echitems[2].replace(" ", "");
+                mList.add(new Model(itsmee, Model.AUDIO_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "voice/" + filen));
+            }else {
+                String[] echitems = txtMessage.split(" ");
+                String filen = echitems[2].replace(" ", "");
+                mList.add(new Model(itsmee, Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen));
+            }
+
+        }else{
+            mList.add(new Model(itsmee, Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, ""));
+
+        }
+        mRecyclerView.setAdapter(adapter);
+        //mRecyclerView.smoothScrollToPosition(mList.size()-1);
+        mRecyclerView.scrollToPosition(mList.size()-1);
+
+    }
+    private void removeAllItemsFromListview(){
+        mList.clear();
+        mRecyclerView.setAdapter(adapter);
+    }
+    private int uploadVoiceFile(String pathh, String hereMyid) {
+        int serverResponseCode = 0;
+        //String fileName = sourceFileUri;
+
+        HttpURLConnection conn = null;
+        DataOutputStream dos = null;
+        String lineEnd = "\r\n";
+        String twoHyphens = "--";
+        String boundary = "*****";
+        int bytesRead, bytesAvailable, bufferSize;
+        byte[] buffer;
+        int maxBufferSize = 1 * 1024 * 1024;
+        //File sourceFile = new File(sourceFileUri);
+
         try {
-            outStream = new FileOutputStream(outFile);
 
-        } catch (FileNotFoundException e) {
-            Toast.makeText(getContext(), getString(R.string.lng_err_save_img), Toast.LENGTH_LONG).show();
-            throw new RuntimeException(e);
+            // open a URL connection to the Servlet
+            FileInputStream fileInputStream = new FileInputStream(pathh);
+            URL url = new URL(upLoadVoiceServerUri);
 
+            // Open a HTTP  connection to  the URL
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setDoInput(true); // Allow Inputs
+            conn.setDoOutput(true); // Allow Outputs
+            conn.setUseCaches(false); // Don't use a Cached Copy
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("ENCTYPE", "multipart/form-data");
+            conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+            String filenametosend = hereMyid + "_" + System.currentTimeMillis() + ".3gp";
+            conn.setRequestProperty("uploaded_file", filenametosend);
+            Log.e("filename", "::::::::::::::::::::::::::::::::::::::::::::::::::::" + filenametosend);
+            dos = new DataOutputStream(conn.getOutputStream());
+
+            dos.writeBytes(twoHyphens + boundary + lineEnd);
+
+            dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=" + filenametosend + "" + lineEnd);
+            dos.writeBytes(lineEnd);
+
+            // create a buffer of  maximum size
+            bytesAvailable = fileInputStream.available();
+
+            bufferSize = Math.min(bytesAvailable, maxBufferSize);
+            buffer = new byte[bufferSize];
+
+            //ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            //FixBitmap.compress(Bitmap.CompressFormat.JPEG, 30, bos);
+            //byte[] mybytesRead = bos.toByteArray();
+            // read file and write it into form...
+            bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+            while (bytesRead > 0) {
+
+                dos.write(buffer, 0, bufferSize);
+                bytesAvailable = fileInputStream.available();
+                bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+            }
+
+            // send multipart form data necesssary after file data...
+            //dos.write(mybytesRead);
+            dos.writeBytes(lineEnd);
+            dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+            // Responses from the server (code and message)
+            serverResponseCode = conn.getResponseCode();
+            String serverResponseMessage = conn.getResponseMessage();
+
+            Log.i("oooooooooooooooooo", "oooooooooooooooooooooooooooooooooooooooooooooooooo  HTTP Response is :" + serverResponseMessage + ": " + serverResponseCode);
+
+            if (serverResponseCode == 200) {
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        Log.i("uuuuuuuuuuuuu", "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu  File Upload Complete.");
+                        int temi = Integer.valueOf(hereMyid);
+                        String temp2 = "";
+                        if (temi < 10)
+                            temp2 = "00" + temi;
+                        else if (temi < 100)
+                            temp2 = "0" + temi;
+                        else
+                            temp2 = "" + temi;
+                        sendChatToServer("VOC " + temp2 + " " + filenametosend);
+                        txtChatForSend.setVisibility(View.VISIBLE);
+                        btn_fabCancel.setVisibility(View.GONE);
+                        btn_fabPlay.setVisibility(View.GONE);
+                        txt_record_alert.setVisibility(View.GONE);
+                    }
+                });
+            }
+
+            //close the streams //
+            //fileInputStream.close();
+            dos.flush();
+            dos.close();
+
+        } catch (MalformedURLException ex) {
+
+            dialog.dismiss();
+            ex.printStackTrace();
+
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    Log.i("uuuuuuuuuuuuu", "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu  MalformedURLException");
+
+                }
+            });
+            Log.i("uuuuuuuuuuuuu", "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu  error: " + ex.getMessage());
+        } catch (Exception e) {
+
+            dialog.dismiss();
+            e.printStackTrace();
+
+            runOnUiThread(new Runnable() {
+                public void run() {
+
+                    Toast.makeText(MainActivity.this, "Got Exception : see logcat ",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+            Log.e("Upload file to server Exception", "Exception : "
+                    + e.getMessage(), e);
         }
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
-        try {
-            outStream.flush();
-            outStream.close();
-            Toast.makeText(getContext(), getString(R.string.lng_ok_save_img), Toast.LENGTH_LONG).show();
+        dialog.dismiss();
+        return serverResponseCode;
 
-        } catch (IOException e) {
-            Toast.makeText(getContext(), getString(R.string.lng_err_save_img), Toast.LENGTH_LONG).show();
-
-            throw new RuntimeException(e);
-        }
 
     }
 
+    //endregion
+
+    //region public methods
+    public Boolean isNetworkAvailable(Application application) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Network nw = connectivityManager.getActiveNetwork();
+            if (nw == null) return false;
+            NetworkCapabilities actNw = connectivityManager.getNetworkCapabilities(nw);
+            return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
+        } else {
+            NetworkInfo nwInfo = connectivityManager.getActiveNetworkInfo();
+            return nwInfo != null && nwInfo.isConnected();
+        }
+    }
+    public void turnOffFrag(){
+        myFrag1.setVisibility(View.GONE);
+    }
+    public void loginInit(){
+        myID = myConfigs.get_myID();
+        myName = myConfigs.get_myName();
+        mEditor.putString("myID", myID);
+        mEditor.putString("myName", myName);
+        mEditor.apply();
+        toolbarTxtVeiw.setText(myName);
+        myFrag1.setVisibility(View.GONE);
+        mLivelog.setmyID(myID);
+
+        mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
+        //mNotifreg.setmyID(myID);
+        //mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
+        //mSetNotifCTX.setmyID(myID);
+        //mSetNotifCTX.setStarterUrl(myServerAddress + "setp.php?liivx=");
+        mSetChat.setmyID(myID);
+        mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
+        mGetChats.setmyID(myID);
+        mGetChats.setStarterUrl(myServerAddress + "getchats2.php?liivx=");
+        mainTimer.startTimer();
+        baseTimer.startTimer();
+        menu_stat = true;
+        invalidateOptionsMenu();
+        myConfigs.set_man("hastam");
+        mEditor.putString("man", "hastam");
+        mEditor.apply();
+        mEditor.putString("isLogin", "1");
+        mEditor.apply();
+        if(myServiceEnable){
+            sureServiceisStarting();
+        }else{
+            stopMyService();
+        }
+        mEditor.putString("loginInit", "ok");
+        mEditor.apply();
+
+
+    }
+    public void stopMyService(){
+        stopService(new Intent(MainActivity.this, BackgroundLocationUpdateService.class));
+    }
+    public void playAlarmSound()  {
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+        mp.start();
+    }
+    public void sureServiceisStarting(){
+        Boolean ympbool = isMyServiceRunning(mBackgroundLocationUpdateService.getClass());
+        if(!ympbool){
+            mServiceIntent = new Intent(MainActivity.this, mBackgroundLocationUpdateService.getClass());
+
+            if (!isMyServiceRunning(mBackgroundLocationUpdateService.getClass())) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    getApplicationContext().startForegroundService(new Intent(getApplicationContext(), mBackgroundLocationUpdateService.getClass()));
+                } else {
+                    getApplicationContext().startService(new Intent(getApplicationContext(), mBackgroundLocationUpdateService.getClass()));
+                }
+                //startService(mServiceIntent);
+                Log.i("Count", "################## starting service");
+            }
+        }else{
+            Log.i("Count", "################## great. you are alive yourself");
+        }
+    }
+    public boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Running");
+                return true;
+            }
+        }
+        Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Not running");
+        return false;
+    }
+    //endregion
+
+   //region None usage functions
+//    private void getNotif(){
+//        mNotifreg.singleRequest(180);
+//        mNotifregTimer.startTimer();
+//    }
+//    private void getNotifCheck(){
+//        if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
+//            Log.i("~~~~~~getNotif", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getNotif~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+//            mNotifregTimer.stopTimer();
+//            String respo = mNotifreg.get_ansSingleRequest();
+//            String isOk = respo.substring(0,6);
+//            if(isOk.equals("sqErro")){
+//                Log.i("~~~~~~getNotif", "                                 sqErro END                             try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+//                long templng1 = mainTimer.getCurrentDuration();
+//                if(templng1<((1000*MAIN_LOOP_SEC)/2)){
+//                    //getNotif();
+//                }else{
+//                    periodPerocess = false;
+//                }
+//            }else if(isOk.equals("cancel")){
+//                periodPerocess = false;
+//            }else if(isOk.equals("error!")){
+//                periodPerocess = false;
+//
+//            }else if(isOk.equals("<html>")){
+//                String responotif = respo.substring(53);
+//                textViewRespoNotif.setText(responotif);
+//                setNotifCTXf();
+//            }else{
+//
+//            }
+//            mNotifreg.set_isSingleRequestAns(false);
+//        }
+//    }
+
+//    private void setNotifCTXf(){
+//        mSetNotifCTX.setParams("p1","v1", "p2", "v2");
+//        mSetNotifCTX.setValues("notifCTS", "0", "notifCTR", "1");
+//        mSetNotifCTX.send4Params(2);
+//        mSetNotifCTXTimer.startTimer();
+//    }
+//    private void setNotifCTXcheck(){
+//        if(mSetNotifCTX.get_isSend4ParamAns() && !mSetNotifCTX.get_ansSend4Param().isEmpty()){
+//            Log.i("~~~~~NotifCTXf", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NotifCTXf~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
+//            mNotifregTimer.stopTimer();
+//            String isOk = mSetNotifCTX.get_ansSend4Param();
+//            if(isOk.equals("ok")){
+//                periodPerocess = false;
+//
+//            }else if(isOk.equals("p4")){
+//                periodPerocess = false;
+//            }else if(isOk.equals("er")){
+//                periodPerocess = false;
+//
+//            }else{
+//                periodPerocess = false;
+//            }
+//            mSetNotifCTX.set_isSend4ParamAns(false);
+//        }
+//    }
+//
+
+
+    //endregion
 
 }

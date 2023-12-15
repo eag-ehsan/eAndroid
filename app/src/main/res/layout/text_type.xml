@@ -13,9 +13,10 @@
         android:orientation="vertical">
 
         <LinearLayout
+            android:id="@+id/text_type_cardheader"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/blue"
+            android:background="@color/myPink"
             android:gravity="left|center_vertical"
             android:orientation="horizontal">
 
@@ -24,17 +25,36 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/d1" />
+                android:src="@drawable/d3" />
 
             <TextView
                 android:id="@+id/text_type_title"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
                 android:padding="2dp"
                 android:text="Nobody1"
-                android:layout_marginRight="20dp"
                 android:textColor="@color/dark_bg3"
                 android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right|center_vertical|end"
+                android:orientation="horizontal">
+
+
+
+                <ImageButton
+                    android:id="@+id/text_type_menu"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/grip_dots_vertical_10"
+                    android:background="@color/blue"
+                    card_view:tint="@color/dark_bg3" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
         <TextView
@@ -51,10 +71,10 @@
             android:id="@+id/text_type_dt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
             android:text="TextView"
             android:textAlignment="textEnd"
             android:textSize="10sp"
-            android:layout_marginRight="5dp"
             android:textStyle="bold" />
 
     </LinearLayout>

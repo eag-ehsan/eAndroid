@@ -23,4 +23,5 @@
     <color name="light_text1">#E6FFEA</color>
     <color name="light_text2">#FDEFEF</color>
     <color name="header_footer_bg">#231001</color>
+    <color name="myPink">#FF61EF</color>
 </resources>

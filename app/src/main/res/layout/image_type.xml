@@ -2,8 +2,8 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/image_type_card_view"
-    android:layout_width="200dp"
-    android:layout_height="200dp"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
     android:layout_margin="5dp"
     card_view:cardElevation="5dp">
 
@@ -13,6 +13,7 @@
         android:orientation="vertical">
 
         <LinearLayout
+            android:id="@+id/image_type_cardheader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/blue"
@@ -24,32 +25,50 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/d1" />
+                android:src="@drawable/d3" />
 
             <TextView
                 android:id="@+id/image_type_title"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="2dp"
                 android:layout_marginRight="20dp"
+                android:padding="2dp"
                 android:text="Nobody1"
                 android:textColor="@color/dark_bg3"
                 android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right|center_vertical|end"
+                android:orientation="horizontal">
+
+
+                <ImageButton
+                    android:id="@+id/image_type_menu"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/grip_dots_vertical_10"
+                    android:background="@color/blue"
+                    card_view:tint="@color/dark_bg3" />
+            </LinearLayout>
         </LinearLayout>
 
         <ImageView
             android:id="@+id/image_type_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
             android:src="@drawable/my_chat_bg2" />
+
         <TextView
             android:id="@+id/image_type_dt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
             android:text="TextView"
             android:textAlignment="textEnd"
             android:textSize="10sp"
-            android:layout_marginRight="5dp"
             android:textStyle="bold" />
 
 

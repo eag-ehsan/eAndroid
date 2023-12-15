@@ -63,6 +63,11 @@ public class BrowsAllImages extends AppCompatActivity {
                 }
 
             }
+
+            @Override
+            public void rVClicked_delete(View v, int position) {
+
+            }
         });
         mRecyclerViewAll = (RecyclerView) findViewById(R.id.recyclerView2);
         mRecyclerViewAll.setLayoutManager(linearLayoutManager);
@@ -126,7 +131,7 @@ public class BrowsAllImages extends AppCompatActivity {
         Boolean temp_itischat = false;
         //Log.e("in","---------------------------" + txtMessage);
 
-        mListAll.add(new Model(Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen));
+        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen));
         mRecyclerViewAll.setAdapter(adapterAll);
         //mRecyclerView.smoothScrollToPosition(mList.size()-1);
         //mRecyclerViewAll.scrollToPosition(mListAll.size()-1);

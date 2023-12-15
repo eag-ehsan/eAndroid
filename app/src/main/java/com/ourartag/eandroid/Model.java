@@ -10,8 +10,9 @@ public class Model {
     public int type;
     public int mWhichicon;
     public String mMsg, mTitle, mImageUrl, mDatetime;
+    public Boolean mItsMe;
 
-    public Model(int type, int whichicon, String datetime, String title, String msg, String imageUrl)
+    public Model(Boolean itsMe, int type, int whichicon, String datetime, String title, String msg, String imageUrl)
     {
         this.type=type;
         this.mWhichicon = whichicon;
@@ -19,6 +20,7 @@ public class Model {
         this.mTitle = title;
         this.mImageUrl = imageUrl;
         this.mDatetime = datetime;
+        this.mItsMe = itsMe;
     }
 
     public String getTitle(){
@@ -26,5 +28,8 @@ public class Model {
     }
     public String getImageURL(){
         return mImageUrl;
+    }
+    public Boolean getItisme(){
+        return mItsMe;
     }
 }

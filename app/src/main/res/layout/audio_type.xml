@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/audio_type_card_view"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_margin="10dp"
     card_view:cardElevation="10dp">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:gravity="center|fill_horizontal"
+        android:orientation="vertical">
+
         <LinearLayout
+            android:id="@+id/audio_type_cardheader"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:background="@color/blue"
             android:gravity="left|center_vertical"
             android:orientation="horizontal">
@@ -22,17 +26,34 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/d1" />
+                android:src="@drawable/d3" />
 
             <TextView
                 android:id="@+id/audio_type_title"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="2dp"
                 android:layout_marginRight="20dp"
+                android:padding="2dp"
                 android:text="Nobody1"
                 android:textColor="@color/dark_bg3"
                 android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right|center_vertical|end"
+                android:orientation="horizontal">
+
+
+                <ImageButton
+                    android:id="@+id/audio_type_menu"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/grip_dots_vertical_10"
+                    android:background="@color/blue"
+                    card_view:tint="@color/dark_bg3" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
 
@@ -41,23 +62,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="50dp"
 
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="50dp"
+            android:layout_marginBottom="5dp"
             android:src="@drawable/volume_50"
             android:tint="#FFFFFF" />
+
         <TextView
             android:id="@+id/audio_type_dt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
             android:text="TextView"
             android:textAlignment="textEnd"
             android:textSize="10sp"
-            android:layout_marginRight="5dp"
             android:textStyle="bold" />
 
-    </RelativeLayout>
+    </LinearLayout>
 
 </androidx.cardview.widget.CardView>

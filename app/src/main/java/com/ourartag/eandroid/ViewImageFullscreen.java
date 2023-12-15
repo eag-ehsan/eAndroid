@@ -104,9 +104,10 @@ public class ViewImageFullscreen extends Fragment implements View.OnClickListene
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_view_image_fullscreen, container, false);
+
+        imgfsr = (ImageView) view.findViewById(R.id.img_fullscreen_id);
         cldBtn = (ImageButton) view.findViewById(R.id.close_fuulscreen_id);
         cldBtn.setOnClickListener(this);
-        imgfsr = (ImageView) view.findViewById(R.id.img_fullscreen_id);
         saveBtnn = (ImageButton) view.findViewById(R.id.save_fullsscreen_id);
         saveBtnn.setOnClickListener(this);
         rotateBtnn = (ImageButton) view.findViewById(R.id.rotate_fullsscreen_id);

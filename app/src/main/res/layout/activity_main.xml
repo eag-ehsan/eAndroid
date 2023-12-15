@@ -412,7 +412,7 @@
                                 android:layout_centerHorizontal="true"
                                 android:layout_marginLeft="2dp"
                                 android:layout_marginBottom="12dp"
-                                android:src="@drawable/volume_50"
+                                android:src="@drawable/microphone_50"
                                 android:tint="#FFFFFF" />
                             <com.google.android.material.floatingactionbutton.FloatingActionButton
                                 android:id="@+id/main_fab6"
@@ -442,22 +442,21 @@
             android:orientation="horizontal">
 
 
-
             <EditText
                 android:id="@+id/txtChatToSend"
                 style="@style/Vazir"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="80"
-                android:background="#FFFFFF"
                 android:layout_marginLeft="6dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
+                android:layout_weight="80"
+                android:background="#FFFFFF"
                 android:inputType="text"
 
                 android:textSize="16dp"
+                android:visibility="visible"
                 tools:ignore="TouchTargetSizeCheck" />
-
             <ImageButton
                 android:id="@+id/sendBtn"
                 android:layout_width="0dp"
@@ -466,6 +465,19 @@
                 android:background="@color/header_footer_bg"
                 android:src="@drawable/paper_plane_28"
                 app:tint="@color/light_bg1" />
+            <TextView
+                android:id="@+id/txtRecordAlert"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="80"
+                android:text="@string/lng_record_alert"
+                android:textAlignment="center"
+                android:textColor="@color/errcolo"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+
 
             <ImageButton
                 android:id="@+id/sendImageBtn_id"
@@ -476,6 +488,24 @@
                 android:src="@drawable/paperclip_28"
                 android:visibility="gone"
                 app:tint="@color/light_bg1" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabPlayvoce"
+                android:layout_width="70dp"
+                android:layout_height="35dp"
+                android:src="@drawable/volume_50"
+                android:tint="#FFFFFF"
+                android:visibility="gone"
+                app:fabCustomSize="35dp" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabVoiceCancel"
+                android:layout_width="70dp"
+                android:layout_height="35dp"
+                android:src="@drawable/circle_xmark_35"
+                android:tint="#FFFFFF"
+                android:visibility="gone"
+                app:fabCustomSize="35dp" />
 
         </LinearLayout>
 
