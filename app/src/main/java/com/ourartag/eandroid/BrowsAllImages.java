@@ -130,8 +130,9 @@ public class BrowsAllImages extends AppCompatActivity {
     public void setChatToRecyclerview(String txtfilen) {
         Boolean temp_itischat = false;
         //Log.e("in","---------------------------" + txtMessage);
-
-        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen));
+        String[] findUserId = txtfilen.split("_");
+        int userIddd = Integer.parseInt(findUserId[0]);
+        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen, userIddd,0));
         mRecyclerViewAll.setAdapter(adapterAll);
         //mRecyclerView.smoothScrollToPosition(mList.size()-1);
         //mRecyclerViewAll.scrollToPosition(mListAll.size()-1);

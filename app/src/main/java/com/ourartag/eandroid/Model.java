@@ -8,11 +8,11 @@ public class Model {
     public static final int AUDIO_TYPE=2;
 
     public int type;
-    public int mWhichicon;
+    public int mWhichicon, mUserID, mChatID;
     public String mMsg, mTitle, mImageUrl, mDatetime;
     public Boolean mItsMe;
 
-    public Model(Boolean itsMe, int type, int whichicon, String datetime, String title, String msg, String imageUrl)
+    public Model(Boolean itsMe, int type, int whichicon, String datetime, String title, String msg, String imageUrl, int userID, int chatID)
     {
         this.type=type;
         this.mWhichicon = whichicon;
@@ -21,6 +21,8 @@ public class Model {
         this.mImageUrl = imageUrl;
         this.mDatetime = datetime;
         this.mItsMe = itsMe;
+        this.mUserID = userID;
+        this.mChatID = chatID;
     }
 
     public String getTitle(){
@@ -32,4 +34,11 @@ public class Model {
     public Boolean getItisme(){
         return mItsMe;
     }
+    public int getChatID(){
+        return mChatID;
+    }
+    public int getUserID(){
+        return mUserID;
+    }
+
 }

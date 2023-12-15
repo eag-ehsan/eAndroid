@@ -1,6 +1,7 @@
 package com.ourartag.eandroid;
 
 import androidx.activity.result.ActivityResult;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -11,10 +12,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.OrientationHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.app.ActivityManager;
@@ -22,9 +23,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.RingtoneManager;
@@ -35,8 +33,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -57,17 +53,14 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -89,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView online_imgv, seen_imgv, myTumbnail;
     FragmentContainerView myFrag1;
     esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
-    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, lastChatdt, pathapp, upLoadVoiceServerUri;
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, pathapp, upLoadVoiceServerUri;
     myVolley mLivelog, mSetChat, mGetChats, myusr0;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
@@ -98,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
     MediaPlayer mPlayer;
     Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen, iduserSeenNewChat, permissionTpRecVoice;
     private boolean fabStateRecord = false, fabStatePlay = false;
-    int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter;
+    int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter, lastChatID = 0;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
 
@@ -115,13 +108,14 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
     //region static items
+    @SuppressLint("StaticFieldLeak")
     private static Context mContext;
     public static Context getContext() {
         return mContext;
     }
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
+    private static final String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
@@ -131,77 +125,10 @@ public class MainActivity extends AppCompatActivity {
     }
     //endregion
 
-    //region ask permission functions
-    public boolean askForFilePermissions() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            boolean hasPermission = this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-
-            if (!hasPermission) {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 1: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay!
-
-                } else {
-                    // permission denied, boo!
-                }
-
-                return;
-            }
-        }
-    }
-    private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
-
-    private void requestAudioPermissions() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            //When permission is not granted by user, show them message why this permission is needed.
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.RECORD_AUDIO)) {
-                Toast.makeText(this, "Please grant permissions to record audio", Toast.LENGTH_LONG).show();
-
-                //Give user option to still opt-in the permissions
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
-
-            } else {
-                // Show user dialog to grant permission to record audio
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
-            }
-        }
-        //If permission is granted, then go ahead recording audio
-        else if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            permissionTpRecVoice = true;
-
-        }
-    }
-
-
-
-    //endregion
 
     //region Overrides
 
+    @SuppressLint({"CutPasteId", "SdCardPath"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -235,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         //region Toolbar Cods
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         toolbarTxtVeiw = (TextView)mToolbar.findViewById(R.id.toolbarTextView);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         //endregion
@@ -351,11 +278,7 @@ public class MainActivity extends AppCompatActivity {
         myLati = myConfigs.get_myLati();
         myLoni = myConfigs.get_myLoni();
         mIsLogin = sharedPref.getString("isLogin","0");
-        if(myConfigs.get_bgService().equals("off")) {
-            myServiceEnable = false;
-        }else{
-            myServiceEnable = true;
-        }
+        myServiceEnable = !myConfigs.get_bgService().equals("off");
         myServerAddress = myConfigs.get_myServerAddress();
 
         //endregion
@@ -378,12 +301,11 @@ public class MainActivity extends AppCompatActivity {
         nameAnyUserSelect = "";
         getModcounter = 0;
         iduserSeenNewChat = false;
-        lastChatdt = "";
         permissionTpRecVoice = false;
         //endregion
 
         //region recyclerview setup
-        mList= new ArrayList();
+        mList= new ArrayList<>();
 //        mList.add(new Model(Model.TEXT_TYPE, R.drawable.d4, "Ehsan Ahmadi", getString(R.string.lng_login_txt1), ""));
 //        mList.add(new Model(Model.IMAGE_TYPE,R.drawable.d4, "Dorsa", "", myServerAddress + "upload/2_1702396287700.jpg"));
 //        mList.add(new Model(Model.AUDIO_TYPE, R.raw.fart, "Dorsa", "", ""));
@@ -393,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         adapter.setOnItemClickListener(new RecyclerViewClickListener(){
 
+            @SuppressLint("SetTextI18n")
             @Override
             public void recyclerViewListClicked(View v, int position) {
                 nameAnyUserSelect = mList.get(position).getTitle();
@@ -507,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
         btn_mainFab2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                lastChatdt = "";
+                lastChatID = 0;
                 removeAllItemsFromListview();
                 mCounterGetchat = 100;
             }
@@ -633,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
             dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
             dlgPage.setVisibility(View.VISIBLE);
         }
-        if(myID.equals("0") || myName.toString().isEmpty()){
+        if(myID.equals("0") || myName.isEmpty()){
             myFrag1.setVisibility(View.VISIBLE);
             Fragment mLogin = new Login();
             FragmentManager fm = getSupportFragmentManager();
@@ -667,12 +590,12 @@ public class MainActivity extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-            if (myFrag1.getVisibility() == View.VISIBLE) {
-
-            }
-            else {
-
-            }
+//            if (myFrag1.getVisibility() == View.VISIBLE) {
+//
+//            }
+//            else {
+//
+//            }
             Toast.makeText(mContext, "No No", Toast.LENGTH_LONG).show();
             return true;
         }
@@ -740,10 +663,27 @@ public class MainActivity extends AppCompatActivity {
 
         super.onDestroy();
     }
-
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        if (requestCode == 1) {// If request is cancelled, the result arrays are empty.
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // permission was granted, yay!
+//
+//            } else {
+//                // permission denied, boo!
+//            }
+//
+//
+//        }
+    }
     //endregion
 
-    //region Main Menu
+
+
+    //region functions
+
+    //region Main Menu Functions
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -830,12 +770,53 @@ public class MainActivity extends AppCompatActivity {
     }
     //endregion
 
+    //region ask permission Functions
+    public void askForFilePermissions() {
+        boolean hasPermission = this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
 
-    //region private methods
+        if (!hasPermission) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+
+    }
+
+    private void requestAudioPermissions() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            //When permission is not granted by user, show them message why this permission is needed.
+            int MY_PERMISSIONS_RECORD_AUDIO = 1;
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.RECORD_AUDIO)) {
+                Toast.makeText(this, "Please grant permissions to record audio", Toast.LENGTH_LONG).show();
+
+                //Give user option to still opt-in the permissions
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        MY_PERMISSIONS_RECORD_AUDIO);
+
+            } else {
+                // Show user dialog to grant permission to record audio
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        MY_PERMISSIONS_RECORD_AUDIO);
+            }
+        }
+        //If permission is granted, then go ahead recording audio
+        else if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            permissionTpRecVoice = true;
+
+        }
+    }
+    //endregion
+
+    //region Loop Functions
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void baseLoop(){
-
-
-
         if(isAnyUserSelect){
             if(isAnyUserSelectOnline){
                 online_imgv.setImageDrawable(getDrawable(R.drawable.ledg));
@@ -869,6 +850,8 @@ public class MainActivity extends AppCompatActivity {
         if(!periodPerocess){
             mainLoopTry = 0;
             if(isAnyUserSelect){
+                mLivelog.setmyID(myID);
+                mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
                 mLivelog.setParams("usrname","", "", "");
                 mLivelog.setValues(nameAnyUserSelect, "", "", "");
                 mLivelog.send1Params(5);
@@ -901,7 +884,7 @@ public class MainActivity extends AppCompatActivity {
         if(Math.floorMod(getModcounter, 10)==0){
             String mman = sharedPref.getString("man", "");
             if(mman.equals("oftadam")){
-                if(iduserSeenNewChat==false){
+                if(!iduserSeenNewChat){
                     playAlarmSound();
                     iduserSeenNewChat = true;
                 }
@@ -940,11 +923,6 @@ public class MainActivity extends AppCompatActivity {
                 newchat = isOk.substring(2,3);//"00000"
                 String tempOnlin = isOk.substring(3,4);
                 String tempSeen = isOk.substring(4);
-                if(notifCTS.equals("1")){
-                    //getNotif();
-                }else{
-                    periodPerocess = false;
-                }
                 String mman = sharedPref.getString("man", "");
                 if(newchat.equals("1") && mman.equals("hastam")){
 
@@ -952,27 +930,21 @@ public class MainActivity extends AppCompatActivity {
                         mCounterGetchat = 100;
                     }
                 }
-                if(tempOnlin.equals("1")){
-                    isAnyUserSelectOnline = true;
-                }else{
-                    isAnyUserSelectOnline = false;
-                }
-                if(tempSeen.equals("0")){
-                    isAnyUserSelectSeen = true;
-                }else{
-                    isAnyUserSelectSeen = false;
-                }
+                isAnyUserSelectOnline = tempOnlin.equals("1");
+                isAnyUserSelectSeen = tempSeen.equals("0");
+                periodPerocess = false;
             }
             mLivelog.set_isSend1ParamAns(false);
 
 
         }
     }
+    //endregion
 
-
-
-
+    //region chat Functions
     private void sendChatToServer(String txtMessage) {
+        mSetChat.setmyID(myID);
+        mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
         mSetChat.setParams("msg","", "", "");
         mSetChat.setValues(txtMessage, "", "", "");
         mSetChat.send1Params(2);
@@ -1007,9 +979,9 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
-
-
     private void getChatsRequest(){
+        mGetChats.setmyID(myID);
+        mGetChats.setStarterUrl(myServerAddress + "getchats2.php?liivx=");
         mGetChats.singleRequest(2068);
         mGetChatsTimer.startTimer();
         chatgetPerocess = true;
@@ -1020,51 +992,40 @@ public class MainActivity extends AppCompatActivity {
             mCounterGetchat++;
             mGetChatsTimer.stopTimer();
             String completeresp = mGetChats.get_ansSingleRequest();
-            if(completeresp.equals("sqError")){
+            if(completeresp.startsWith("sqError")){
                 chatgetPerocess = false;
             }else{
-                String aslStr = "";
-                String strttem = completeresp.substring(0,53);
-                strttem = strttem.substring(47);
-                String isOk = strttem.substring(0,2);
-                //int numberofe =Integer.valueOf(strttem.substring(2));
-                if(isOk.equals("ok")){
+                String withoutHtmlHeader = completeresp.substring(47);
+                if(withoutHtmlHeader.startsWith("ok")){
+                    String justChatsWithendBody = withoutHtmlHeader.substring(2);
                     Log.i("~~~~~~~getChat", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get chat ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
-                    int b = completeresp.indexOf("</body>") ;
-                    aslStr = completeresp.substring(53, b);
-                    String[] echitems = aslStr.split(";");
+                    int b = justChatsWithendBody.indexOf("</body>") ;
+                    String justChat = justChatsWithendBody.substring(0, b);
+                    String[] echitems = justChat.split(";");
                     int ii=0, hh=0;
                     String[] wholemsgfortest = echitems[0].split(">");
-                    if(!wholemsgfortest[1].equals(lastChatdt)){
-                        String tempstrName, tempstrMsg, tempstrdatetime;
+                    int lastChatIDD = Integer.parseInt(wholemsgfortest[0]);
+                    if(lastChatIDD!=lastChatID){
+                        String strName, strMsg, strdatetime;
+                        int userIDD = 0, chatIDD=0;
                         removeAllItemsFromListview();
                         for(ii=(echitems.length-1);ii>=0;ii--){
                             String[] wholemsg = echitems[ii].split(">");
-                            tempstrName = wholemsg[0];
-                            tempstrdatetime = wholemsg[1];
-                            tempstrMsg = wholemsg[2];
+                            chatIDD = Integer.parseInt(wholemsg[0]);
+                            userIDD = Integer.parseInt(wholemsg[1]);
+                            strName = wholemsg[2];
+                            strdatetime = wholemsg[3];
+                            strMsg = wholemsg[4];
                             //hh = echitems[ii].indexOf(">");
                             //tempstrName = echitems[ii].substring(0,hh);
                             //tempstrMsg = echitems[ii].substring(hh+1);
-                            Boolean mtisMe = false;
-                            if(tempstrName.equals(myName)){
-                                mtisMe = true;
-                            }else{
-                                mtisMe = false;
-                            }
-                            setChatToRecyclerview(mtisMe, tempstrName, tempstrMsg, tempstrdatetime);
-                            lastChatdt = tempstrdatetime;
-
-
+                            boolean mtisMe = (userIDD==Integer.parseInt(myID));;
+                            setChatToRecyclerview(mtisMe, chatIDD, userIDD, strName, strdatetime, strMsg);
+                            lastChatID = chatIDD;
                         }
                     }
-
                     String mman = sharedPref.getString("man", "");
-                    if(mman.equals("oftadam")){
-                        iduserSeenNewChat = false;
-                    }else{
-                        iduserSeenNewChat = true;
-                    }
+                    iduserSeenNewChat = !mman.equals("oftadam");
                     chatgetPerocess = false;
                 }else{
                     if(mCounterGetchat>65000){
@@ -1079,67 +1040,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
-    private void usrLoginCheck(){
-        if(myusr0.get_isSend2ParamAns() && !myusr0.get_ansSend2Param().isEmpty()){
-            myusr0Timer.stopTimer();
-            String isOk = myusr0.get_ansSend2Param();
-            if(isOk.substring(0,2).equals("ok")){
-                String isID = isOk.substring(2);
-                int tmpit = Integer.parseInt(isID);
-                myConfigs.set_myID(tmpit + "");
-                myusr0.set_isSend2ParamAns(false);
-                mEditor.putString("isLogin", "1");
-                mEditor.apply();
-                mPleaseWaitLinl.setVisibility(View.GONE);
-                loginInit();
-
-
-            }else{
-                mPleaseWaitLinl.setVisibility(View.GONE);
-                myFrag1.setVisibility(View.VISIBLE);
-                Fragment mLogin = new Login();
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction fragmentTransaction = fm.beginTransaction();
-                fragmentTransaction.replace(R.id.fragmentContainerView, mLogin);
-                fragmentTransaction.commit();
-                menu_stat = false;
-                invalidateOptionsMenu();
-            }
-        }
-    }
-
-    private void setChatToRecyclerview(Boolean itsmee, String txtTitle, String txtMessage, String dtdt) {
-        Boolean temp_itischat = false;
-        Boolean temp_itischatvoc = false;
+    private void setChatToRecyclerview(Boolean itsmee,int usrID, int chatID, String txtTitle, String dtdt, String txtMessage) {
+        boolean temp_itischat = false;
+        boolean temp_itischatvoc = false;
         //Log.e("in","---------------------------" + txtMessage);
         if(txtMessage.length()>10){
-            if(txtMessage.substring(0,3).equals("IMG")){
+            if(txtMessage.startsWith("IMG")){
 
                 temp_itischat = true;
-            }else if(txtMessage.substring(0,3).equals("VOC")){
+            }else if(txtMessage.startsWith("VOC")){
 
                 temp_itischat = true;
                 temp_itischatvoc = true;
-            }else {
-                temp_itischat=false;
             }
-        }else {
-            temp_itischat=false;
         }
         if(temp_itischat){
             if(temp_itischatvoc){
                 String[] echitems = txtMessage.split(" ");
                 String filen = echitems[2].replace(" ", "");
-                mList.add(new Model(itsmee, Model.AUDIO_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "voice/" + filen));
+                mList.add(new Model(itsmee, Model.AUDIO_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "voice/" + filen, usrID, chatID));
             }else {
                 String[] echitems = txtMessage.split(" ");
                 String filen = echitems[2].replace(" ", "");
-                mList.add(new Model(itsmee, Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen));
+                mList.add(new Model(itsmee, Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen, usrID, chatID));
             }
 
         }else{
-            mList.add(new Model(itsmee, Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, ""));
+            mList.add(new Model(itsmee, Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, "", usrID, chatID));
 
         }
         mRecyclerView.setAdapter(adapter);
@@ -1151,7 +1078,11 @@ public class MainActivity extends AppCompatActivity {
         mList.clear();
         mRecyclerView.setAdapter(adapter);
     }
-    private int uploadVoiceFile(String pathh, String hereMyid) {
+
+    //endregion
+
+    //region Network Functions
+    private void uploadVoiceFile(String pathh, String hereMyid) {
         int serverResponseCode = 0;
         //String fileName = sourceFileUri;
 
@@ -1162,7 +1093,7 @@ public class MainActivity extends AppCompatActivity {
         String boundary = "*****";
         int bytesRead, bytesAvailable, bufferSize;
         byte[] buffer;
-        int maxBufferSize = 1 * 1024 * 1024;
+        int maxBufferSize = 1024 * 1024;
         //File sourceFile = new File(sourceFileUri);
 
         try {
@@ -1227,7 +1158,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     public void run() {
                         Log.i("uuuuuuuuuuuuu", "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu  File Upload Complete.");
-                        int temi = Integer.valueOf(hereMyid);
+                        int temi = Integer.parseInt(hereMyid);
                         String temp2 = "";
                         if (temi < 10)
                             temp2 = "00" + temi;
@@ -1277,77 +1208,23 @@ public class MainActivity extends AppCompatActivity {
                     + e.getMessage(), e);
         }
         dialog.dismiss();
-        return serverResponseCode;
 
 
     }
-
-    //endregion
-
-    //region public methods
     public Boolean isNetworkAvailable(Application application) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Network nw = connectivityManager.getActiveNetwork();
-            if (nw == null) return false;
-            NetworkCapabilities actNw = connectivityManager.getNetworkCapabilities(nw);
-            return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
-        } else {
-            NetworkInfo nwInfo = connectivityManager.getActiveNetworkInfo();
-            return nwInfo != null && nwInfo.isConnected();
-        }
+    ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        Network nw = connectivityManager.getActiveNetwork();
+        if (nw == null) return false;
+        NetworkCapabilities actNw = connectivityManager.getNetworkCapabilities(nw);
+        return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
+    } else {
+        NetworkInfo nwInfo = connectivityManager.getActiveNetworkInfo();
+        return nwInfo != null && nwInfo.isConnected();
     }
-    public void turnOffFrag(){
-        myFrag1.setVisibility(View.GONE);
-    }
-    public void loginInit(){
-        myID = myConfigs.get_myID();
-        myName = myConfigs.get_myName();
-        mEditor.putString("myID", myID);
-        mEditor.putString("myName", myName);
-        mEditor.apply();
-        toolbarTxtVeiw.setText(myName);
-        myFrag1.setVisibility(View.GONE);
-        mLivelog.setmyID(myID);
-
-        mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
-        //mNotifreg.setmyID(myID);
-        //mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
-        //mSetNotifCTX.setmyID(myID);
-        //mSetNotifCTX.setStarterUrl(myServerAddress + "setp.php?liivx=");
-        mSetChat.setmyID(myID);
-        mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
-        mGetChats.setmyID(myID);
-        mGetChats.setStarterUrl(myServerAddress + "getchats2.php?liivx=");
-        mainTimer.startTimer();
-        baseTimer.startTimer();
-        menu_stat = true;
-        invalidateOptionsMenu();
-        myConfigs.set_man("hastam");
-        mEditor.putString("man", "hastam");
-        mEditor.apply();
-        mEditor.putString("isLogin", "1");
-        mEditor.apply();
-        if(myServiceEnable){
-            sureServiceisStarting();
-        }else{
-            stopMyService();
-        }
-        mEditor.putString("loginInit", "ok");
-        mEditor.apply();
-
-
-    }
-    public void stopMyService(){
-        stopService(new Intent(MainActivity.this, BackgroundLocationUpdateService.class));
-    }
-    public void playAlarmSound()  {
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
-        mp.start();
-    }
+}
     public void sureServiceisStarting(){
-        Boolean ympbool = isMyServiceRunning(mBackgroundLocationUpdateService.getClass());
+        boolean ympbool = isMyServiceRunning(mBackgroundLocationUpdateService.getClass());
         if(!ympbool){
             mServiceIntent = new Intent(MainActivity.this, mBackgroundLocationUpdateService.getClass());
 
@@ -1375,9 +1252,94 @@ public class MainActivity extends AppCompatActivity {
         Log.i ("^^^^^^^^^^^^^^^^^^", "^^^^^^^^^^^^^^^^^^ Not running");
         return false;
     }
+
     //endregion
 
-   //region None usage functions
+    //region Login Functions
+    private void usrLoginCheck(){
+        if(myusr0.get_isSend2ParamAns() && !myusr0.get_ansSend2Param().isEmpty()){
+            myusr0Timer.stopTimer();
+            String isOk = myusr0.get_ansSend2Param();
+            if(isOk.startsWith("ok")){
+                String isID = isOk.substring(2);
+                int tmpit = Integer.parseInt(isID);
+                myConfigs.set_myID(tmpit + "");
+                myusr0.set_isSend2ParamAns(false);
+                mEditor.putString("isLogin", "1");
+                mEditor.apply();
+                mPleaseWaitLinl.setVisibility(View.GONE);
+                loginInit();
+
+
+            }else{
+                mPleaseWaitLinl.setVisibility(View.GONE);
+                myFrag1.setVisibility(View.VISIBLE);
+                Fragment mLogin = new Login();
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                fragmentTransaction.replace(R.id.fragmentContainerView, mLogin);
+                fragmentTransaction.commit();
+                menu_stat = false;
+                invalidateOptionsMenu();
+            }
+        }
+    }
+    public void loginInit(){
+        myID = myConfigs.get_myID();
+        myName = myConfigs.get_myName();
+        mEditor.putString("myID", myID);
+        mEditor.putString("myName", myName);
+        mEditor.apply();
+        toolbarTxtVeiw.setText(myName);
+        myFrag1.setVisibility(View.GONE);
+
+        //mNotifreg.setmyID(myID);
+        //mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
+        //mSetNotifCTX.setmyID(myID);
+        //mSetNotifCTX.setStarterUrl(myServerAddress + "setp.php?liivx=");
+
+
+        mainTimer.startTimer();
+        baseTimer.startTimer();
+        menu_stat = true;
+        invalidateOptionsMenu();
+        myConfigs.set_man("hastam");
+        mEditor.putString("man", "hastam");
+        mEditor.apply();
+        mEditor.putString("isLogin", "1");
+        mEditor.apply();
+        if(myServiceEnable){
+            sureServiceisStarting();
+        }else{
+            stopMyService();
+        }
+        mEditor.putString("loginInit", "ok");
+        mEditor.apply();
+
+
+    }
+
+    //endregion
+
+    //region Utilities
+    public void turnOffFrag(){
+        myFrag1.setVisibility(View.GONE);
+    }
+
+    public void stopMyService(){
+        stopService(new Intent(MainActivity.this, BackgroundLocationUpdateService.class));
+    }
+    public void playAlarmSound()  {
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+        mp.start();
+    }
+
+    //endregion
+
+    //endregion
+
+    //region None usage functions
 //    private void getNotif(){
 //        mNotifreg.singleRequest(180);
 //        mNotifregTimer.startTimer();
