@@ -13,65 +13,93 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/image_type_cardheader"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/blue"
-            android:gravity="left|center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/image_type_icon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/d3" />
-
-            <TextView
-                android:id="@+id/image_type_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="20dp"
-                android:padding="2dp"
-                android:text="Nobody1"
-                android:textColor="@color/dark_bg3"
-                android:textStyle="bold" />
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/image_type_cardheader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="right|center_vertical|end"
+                android:background="@color/blue"
+                android:gravity="left|center_vertical"
                 android:orientation="horizontal">
 
+                <ImageView
+                    android:id="@+id/image_type_icon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/d3" />
 
-                <ImageButton
-                    android:id="@+id/image_type_menu"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:src="@drawable/grip_dots_vertical_10"
-                    android:background="@color/blue"
-                    card_view:tint="@color/dark_bg3" />
+                <TextView
+                    android:id="@+id/image_type_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="20dp"
+                    android:padding="2dp"
+                    android:text="Nobody1"
+                    android:textColor="@color/dark_bg3"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right|center_vertical|end"
+                    android:orientation="horizontal">
+
+
+                    <ImageButton
+                        android:id="@+id/image_type_menu"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:background="@color/blue"
+                        android:src="@drawable/grip_dots_vertical_10"
+                        card_view:tint="@color/dark_bg3" />
+                </LinearLayout>
             </LinearLayout>
+
+            <ImageView
+                android:id="@+id/image_type_image"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/my_chat_bg2" />
+
+            <TextView
+                android:id="@+id/image_type_dt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:text="TextView"
+                android:textAlignment="textEnd"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/image_type_image"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/my_chat_bg2" />
-
-        <TextView
-            android:id="@+id/image_type_dt"
+        <LinearLayout
+            android:id="@+id/image_reply_layout_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:text="TextView"
-            android:textAlignment="textEnd"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+            android:background="@color/white"
+            android:orientation="horizontal"
+            android:visibility="gone">
 
+            <TextView
+                android:id="@+id/image_reply_msg"
+                style="@style/Vazir"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_marginHorizontal="10dp"
+                android:layout_weight="80"
+                android:text="TextView"
+                android:textSize="12sp"
+                android:textStyle="normal" />
 
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

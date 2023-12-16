@@ -148,7 +148,6 @@ public class ViewImageFullscreen extends Fragment implements View.OnClickListene
                         matrix.set(view.getImageMatrix());
                         savedMatrix.set(matrix);
                         start.set(event.getX(), event.getY());
-                        Log.e(TAG, "mode=DRAG"); // write to LogCat
                         mode = DRAG;
                         break;
 
@@ -157,18 +156,15 @@ public class ViewImageFullscreen extends Fragment implements View.OnClickListene
                     case MotionEvent.ACTION_POINTER_UP: // second finger lifted
 
                         mode = NONE;
-                        Log.e(TAG, "mode=NONE");
                         break;
 
                     case MotionEvent.ACTION_POINTER_DOWN: // first and second finger down
 
                         oldDist = spacing(event);
-                        Log.e(TAG, "oldDist=" + oldDist);
                         if (oldDist > 5f) {
                             savedMatrix.set(matrix);
                             midPoint(mid, event);
                             mode = ZOOM;
-                            Log.e(TAG, "mode=ZOOM");
                         }
                         break;
 
@@ -183,7 +179,6 @@ public class ViewImageFullscreen extends Fragment implements View.OnClickListene
                         {
                             // pinch zooming
                             float newDist = spacing(event);
-                            Log.e(TAG, "newDist=" + newDist);
                             if (newDist > 5f)
                             {
                                 matrix.set(savedMatrix);
@@ -231,7 +226,6 @@ public class ViewImageFullscreen extends Fragment implements View.OnClickListene
             }
             String ttp = Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/" + folder_main;
             File dir = new File(ttp);
-            Log.e("pp",ttp);
             dir.mkdirs();
             String fileName = String.format("%d.jpg", System.currentTimeMillis());
             File outFile = new File(dir, fileName);

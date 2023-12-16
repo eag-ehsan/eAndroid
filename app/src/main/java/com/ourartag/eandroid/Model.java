@@ -9,10 +9,10 @@ public class Model {
 
     public int type;
     public int mWhichicon, mUserID, mChatID;
-    public String mMsg, mTitle, mImageUrl, mDatetime;
+    public String mMsg, mTitle, mImageUrl, mDatetime, mDestini;
     public Boolean mItsMe;
 
-    public Model(Boolean itsMe, int type, int whichicon, String datetime, String title, String msg, String imageUrl, int userID, int chatID)
+    public Model(Boolean itsMe, int type, int whichicon, String datetime, String title, String msg, String imageUrl, int userID, int chatID, String destini)
     {
         this.type=type;
         this.mWhichicon = whichicon;
@@ -23,6 +23,7 @@ public class Model {
         this.mItsMe = itsMe;
         this.mUserID = userID;
         this.mChatID = chatID;
+        this.mDestini = destini;
     }
 
     public String getTitle(){
@@ -30,6 +31,12 @@ public class Model {
     }
     public String getImageURL(){
         return mImageUrl;
+    }
+    public String getDestini(){
+        return mDestini;
+    }
+    public String getMsg(){
+        return mMsg;
     }
     public Boolean getItisme(){
         return mItsMe;

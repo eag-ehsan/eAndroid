@@ -71,7 +71,8 @@ public class BrowseImageForSend extends AppCompatActivity {
     esTimer mSetChatTimer;
     int serverResponseCode = 0, tryToSendChat = 3, countertrysend = 0, currentAngle = 0;
     ProgressDialog dialog = null;
-    private int GALLERY = 1, CAMERA = 2;
+    private final int GALLERY = 1;
+    private final int CAMERA = 2;
     String upLoadServerUri = null, myServerAddress;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final int PERMISSION_REQUEST_CODE = 200;
@@ -115,6 +116,7 @@ public class BrowseImageForSend extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -227,7 +229,6 @@ public class BrowseImageForSend extends AppCompatActivity {
                         matrix.set(view.getImageMatrix());
                         savedMatrix.set(matrix);
                         start.set(event.getX(), event.getY());
-                        Log.e("====", "mode=DRAG"); // write to LogCat
                         mode = DRAG;
                         break;
 
@@ -236,18 +237,15 @@ public class BrowseImageForSend extends AppCompatActivity {
                     case MotionEvent.ACTION_POINTER_UP: // second finger lifted
 
                         mode = NONE;
-                        Log.e("====", "mode=NONE");
                         break;
 
                     case MotionEvent.ACTION_POINTER_DOWN: // first and second finger down
 
                         oldDist = spacing(event);
-                        Log.e("====", "oldDist=" + oldDist);
                         if (oldDist > 5f) {
                             savedMatrix.set(matrix);
                             midPoint(mid, event);
                             mode = ZOOM;
-                            Log.e("====", "mode=ZOOM");
                         }
                         break;
 
@@ -262,7 +260,6 @@ public class BrowseImageForSend extends AppCompatActivity {
                         {
                             // pinch zooming
                             float newDist = spacing(event);
-                            Log.e("====", "newDist=" + newDist);
                             if (newDist > 5f)
                             {
                                 matrix.set(savedMatrix);
@@ -504,7 +501,7 @@ public class BrowseImageForSend extends AppCompatActivity {
             conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
             String filenametosend = hereMyid + "_" + System.currentTimeMillis() + ".jpg";
             conn.setRequestProperty("uploaded_file", filenametosend);
-            Log.e("filename", "::::::::::::::::::::::::::::::::::::::::::::::::::::" + filenametosend);
+            Log.i("filename", "::::::::::::::::::::::::::::::::::::::::::::::::::::" + filenametosend);
             dos = new DataOutputStream(conn.getOutputStream());
 
             dos.writeBytes(twoHyphens + boundary + lineEnd);

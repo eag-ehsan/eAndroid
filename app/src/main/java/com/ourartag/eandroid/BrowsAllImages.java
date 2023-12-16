@@ -51,7 +51,6 @@ public class BrowsAllImages extends AppCompatActivity {
 
             @Override
             public void recyclerViewListClicked(View v, int position) {
-                Log.e("------------","----------------------------------------inja");
                 String tmpBooli = mListAll.get(position).getImageURL();
                 if(!tmpBooli.isEmpty()){
                     myFrag1.setVisibility(View.VISIBLE);
@@ -65,9 +64,18 @@ public class BrowsAllImages extends AppCompatActivity {
             }
 
             @Override
-            public void rVClicked_delete(View v, int position) {
+            public void rVClicked_delete(View v, int position, int chatID) {
 
             }
+
+            @Override
+            public void rVClicked_reply(View v, int position, int chatID, String chatTitle, String chatMsgFirstLine) {
+
+            }
+
+
+
+
         });
         mRecyclerViewAll = (RecyclerView) findViewById(R.id.recyclerView2);
         mRecyclerViewAll.setLayoutManager(linearLayoutManager);
@@ -132,7 +140,7 @@ public class BrowsAllImages extends AppCompatActivity {
         //Log.e("in","---------------------------" + txtMessage);
         String[] findUserId = txtfilen.split("_");
         int userIddd = Integer.parseInt(findUserId[0]);
-        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen, userIddd,0));
+        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen, userIddd,0, ""));
         mRecyclerViewAll.setAdapter(adapterAll);
         //mRecyclerView.smoothScrollToPosition(mList.size()-1);
         //mRecyclerViewAll.scrollToPosition(mListAll.size()-1);

@@ -88,8 +88,7 @@ public class myVolley {
                     if(b>180){
                         b = response.indexOf("</body>") + 14;
                     }
-                    String resp = response.substring(0, b);
-                    ansSingleRequest = resp;
+                    ansSingleRequest = response.substring(0, b);
                     isSingleRequestAns = true;
                     Log.i("~~~~~~~~single", "████████████████" + ansSingleRequest);
                 }, new Response.ErrorListener() {
@@ -101,6 +100,7 @@ public class myVolley {
                 }else{
                     ansSingleRequest = tempSingleReq;
                 }
+                Log.e("~~~~~~~~single", "--------------------------------------------------::::::::::" + ansSingleRequest);
                 isSingleRequestAns = true;
             }
         });
@@ -130,8 +130,7 @@ public class myVolley {
 
         StringRequest stringR = new StringRequest(Request.Method.GET, uurl,
                 response -> {
-                    String resp = response.substring(0, outLenght);
-                    ansSend1Param = resp;
+                    ansSend1Param = response.substring(0, outLenght);
                     isSend1ParamAns = true;
                     Log.i("~~~~~~~~send1P", "████████████████" + ansSend1Param);
                 }, new Response.ErrorListener() {
@@ -143,6 +142,7 @@ public class myVolley {
                 }else{
                     ansSend1Param = tempSingleReq;
                 }
+                Log.e("~~~~~~~~send1P", "--------------------------------------------------::::::::::" + ansSend1Param);
                 isSend1ParamAns = true;
             }
         });
@@ -186,6 +186,7 @@ public class myVolley {
                 }else{
                     ansSend2Param = tempSingleReq;
                 }
+                Log.e("~~~~~~~~send2P", "--------------------------------------------------::::::::::" + ansSend2Param);
                 isSend2ParamAns = true;
             }
         });
@@ -227,6 +228,7 @@ public class myVolley {
                 }else{
                     ansSend4Param = tempSingleReq;
                 }
+                Log.e("~~~~~~~~send4P", "--------------------------------------------------::::::::::" + ansSend4Param);
                 isSend4ParamAns = true;
             }
         });

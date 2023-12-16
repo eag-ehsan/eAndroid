@@ -74,22 +74,23 @@ public class MainActivity extends AppCompatActivity {
     TextView ourartaglink;
     myVolley mNotifreg, mSetNotifCTX;
     TextView toolbarTxtVeiw, dialogMsg, mainAppStatus, textViewRespoNotif, txtChatForSend, usernamePleasewait, nameAnyUserSelect_tv, online_txttv, seen_txttv, txt_record_alert;
-    Button btn1, dlgOk;
+    TextView reply_title, reply_msg;
+    Button btn1, dlgOk ;
     FloatingActionButton btn_mainFab1, btn_mainFab2, btn_mainFab3, btn_mainFab4, btn_mainFab5, btn_mainFab6, btn_fabPlay, btn_fabCancel;
-    LinearLayout dlgPage, mPleaseWaitLinl;
+    LinearLayout dlgPage, mPleaseWaitLinl, reply_layout;
     MenuItem about_menu, logout_menu, setting_menu, sendloc_menu, refresh_menu;
-    ImageButton sendBotton, sendImageButton;
+    ImageButton sendBotton, sendImageButton, reply_close;
     ImageView online_imgv, seen_imgv, myTumbnail;
     FragmentContainerView myFrag1;
-    esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer;
-    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, pathapp, upLoadVoiceServerUri;
-    myVolley mLivelog, mSetChat, mGetChats, myusr0;
+    esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer, mDelchatTimer;
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, pathapp, upLoadVoiceServerUri, mChatDesti;
+    myVolley mLivelog, mSetChat, mGetChats, myusr0, mDelchat;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
     Config myConfigs;
     MediaRecorder recorder;
     MediaPlayer mPlayer;
-    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen, iduserSeenNewChat, permissionTpRecVoice;
+    Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen, iduserSeenNewChat, permissionTpRecVoice, reqServerAlarm;
     private boolean fabStateRecord = false, fabStatePlay = false;
     int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter, lastChatID = 0;
     //String[] mainListArray = {"Android","IPhone"};
@@ -124,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
     }
     //endregion
-
 
     //region Overrides
 
@@ -177,9 +177,9 @@ public class MainActivity extends AppCompatActivity {
                     .putExtra(Settings.EXTRA_CHANNEL_ID, 2727);
             startActivity(settingsIntent);
         }
-
+        mDelchat = new myVolley(this);
         mLivelog = new myVolley(this);
-        //mNotifreg = new myVolley(this);
+        mNotifreg = new myVolley(this);
         //mSetNotifCTX = new myVolley(this);
         mSetChat = new myVolley(this);
         mGetChats = new myVolley(this);
@@ -189,11 +189,12 @@ public class MainActivity extends AppCompatActivity {
         mainTimer = new esTimer(new Runnable() {public void run() {mainLoop();}}, 10, 1000 * MAIN_LOOP_SEC, false);
         baseTimer = new esTimer(new Runnable() {public void run() {baseLoop();}}, 10, 500, false);
         mLivelogTimer = new esTimer(new Runnable() {public void run() {mLivelogResponseCheck();}}, 10, 1000, false);
-        //mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
+        mNotifregTimer = new esTimer(new Runnable() {public void run() {getNotifCheck();}}, 10, 1000, false);
         //mSetNotifCTXTimer = new esTimer(new Runnable() {public void run() {setNotifCTXcheck();}}, 10, 1000, false);
         mSetChatTimer = new esTimer(new Runnable() {public void run() {sendChatToServerCheck();}}, 10, 1000, false);
         mGetChatsTimer = new esTimer(new Runnable() {public void run() {getChatsRequestCheck();}}, 10, 1000, false);
         myusr0Timer = new esTimer(new Runnable() {public void run() {usrLoginCheck();}}, 10, 1000, false);
+        mDelchatTimer = new esTimer(new Runnable() {public void run() {delChatsRequestCheck();}}, 10, 1000, false);
         //endregion
 
         //region findViewById
@@ -205,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
             public void onGlobalLayout() {
                 int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
                 if (heightDiff > dpToPx(mContext, 200)) { // if more than 200 dp, it's probably a keyboard...
-                    Log.e("oooo","open");
+                    //Log.i("oooo","open");
                     mainAppStatus.setVisibility(View.GONE);
                     mPanelbala.setVisibility(View.GONE);
 
@@ -216,6 +217,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dlgPage = findViewById(R.id.dialogPage);
+        reply_layout = findViewById(R.id.reply_layout_id);
+        reply_title = findViewById(R.id.reply_title);
+        reply_msg = findViewById(R.id.reply_msg);
+        reply_close = findViewById(R.id.reply_close);
         dialogMsg = findViewById(R.id.vtxtDialogMsg);
         myFrag1 = findViewById(R.id.fragmentContainerView);
         dlgOk = findViewById(R.id.dialogOK);
@@ -286,6 +291,8 @@ public class MainActivity extends AppCompatActivity {
         //region defualt values
         upLoadVoiceServerUri = myServerAddress + "upvoice.php";
         pathapp =  "/data/data/com.ourartag.eandroid/" ;
+        mChatDesti = "0";
+        reqServerAlarm = true;
         menu_stat = false;
         periodPerocess = false;
         chatgetPerocess = false;
@@ -345,9 +352,19 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void rVClicked_delete(View v, int position) {
-
+            public void rVClicked_delete(View v, int position, int chatID) {
+                delChatsRequest(chatID + "");
+                //Toast.makeText(MainActivity.this, "chatID: " + chatID, Toast.LENGTH_LONG).show();
             }
+
+            @Override
+            public void rVClicked_reply(View v, int position, int chatID, String chatTitle, String chatMsgFirstLine) {
+                reply_layout.setVisibility(View.VISIBLE);
+                reply_title.setText(chatTitle);
+                reply_msg.setText(chatMsgFirstLine);
+                mChatDesti = chatID + "";
+            }
+
         });
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         mRecyclerView.setLayoutManager(linearLayoutManager);
@@ -358,6 +375,15 @@ public class MainActivity extends AppCompatActivity {
         //endregion
 
         //region setOnClickListeners
+        reply_close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                reply_layout.setVisibility(View.GONE);
+                mChatDesti = "0";
+
+            }
+        });
         dlgOk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -431,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 lastChatID = 0;
-                removeAllItemsFromListview();
+                removeAllItemsFromRecyclerView();
                 mCounterGetchat = 100;
             }
         });
@@ -679,8 +705,6 @@ public class MainActivity extends AppCompatActivity {
     }
     //endregion
 
-
-
     //region functions
 
     //region Main Menu Functions
@@ -749,7 +773,7 @@ public class MainActivity extends AppCompatActivity {
             fragmentTransaction.commit();
             return true;
         }else if(item.getItemId()==R.id.menu_refresh){
-            removeAllItemsFromListview();
+            removeAllItemsFromRecyclerView();
             mCounterGetchat = 100;
             return true;
         }else if(item.getItemId()==R.id.menu_sendtoserver){
@@ -846,13 +870,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void mainLoop(){
-        Log.i ("|||||||||||||||||", "|||||||||||||||||||||||||||||||||||||| main loop");
+        Log.d ("Looooooppp", "|||||||||||||||||||||||||||||||||||||| main loop");
         if(!periodPerocess){
             mainLoopTry = 0;
             if(isAnyUserSelect){
-                mLivelog.setmyID(myID);
-                mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
-                mLivelog.setParams("usrname","", "", "");
+
+
                 mLivelog.setValues(nameAnyUserSelect, "", "", "");
                 mLivelog.send1Params(5);
                 periodPerocess = true;
@@ -892,9 +915,9 @@ public class MainActivity extends AppCompatActivity {
             if(mman.equals("hastam")){
                 mCounterGetchat = 100;
             }
-
-            Log.e ("|||||||||||||||||", "|||||||||||||||||||||||||||||||||||||| main loop - " + chatgetPerocess.toString());
+            Log.d ("Looooooppp", "|||||||||||||||||||||||||||||||||||||| 10 mod main loop");
         }
+
 
         //baseLoop();
     }
@@ -930,6 +953,10 @@ public class MainActivity extends AppCompatActivity {
                         mCounterGetchat = 100;
                     }
                 }
+                if(notifCTS.equals("1") && reqServerAlarm){
+                    getNotif();
+                }
+
                 isAnyUserSelectOnline = tempOnlin.equals("1");
                 isAnyUserSelectSeen = tempSeen.equals("0");
                 periodPerocess = false;
@@ -944,27 +971,26 @@ public class MainActivity extends AppCompatActivity {
     //region chat Functions
     private void sendChatToServer(String txtMessage) {
         mSetChat.setmyID(myID);
-        mSetChat.setStarterUrl(myServerAddress + "setchat.php?liivx=");
-        mSetChat.setParams("msg","", "", "");
-        mSetChat.setValues(txtMessage, "", "", "");
-        mSetChat.send1Params(2);
+        mSetChat.setStarterUrl(myServerAddress + "setchat24.php?liivx=");
+        mSetChat.setParams("msg","desti", "", "");
+        mSetChat.setValues(txtMessage, mChatDesti, "", "");
+        mSetChat.send2Params(2);
         mSetChatTimer.startTimer();
     }
     private void sendChatToServerCheck(){
-        if(mSetChat.get_isSend1ParamAns() && !mSetChat.get_ansSend1Param().isEmpty()){
+        if(mSetChat.get_isSend2ParamAns() && !mSetChat.get_ansSend2Param().isEmpty()){
             Log.i("~~~~~~sendChat", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sendChat~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             mSetChatTimer.stopTimer();
-            String isOk = mSetChat.get_ansSend1Param();
+            String isOk = mSetChat.get_ansSend2Param();
             if(isOk.equals("ok")){
-                mSetChat.set_isSend1ParamAns(false);
                 sendBotton.setEnabled(true);
                 txtChatForSend.setText("");
                 sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.blue));
                 dialogMsg.setText(getString(R.string.lng_msg1));
                 dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
+                reply_layout.setVisibility(View.GONE);
             }else{
                 Log.i("~~~~~~sendChat", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Chat Fail~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                mSetChat.set_isSend1ParamAns(false);
                 mSetChat.send1Params(2);
                 mSetChatTimer.startTimer();
                 mCounterSendchat++;
@@ -973,15 +999,18 @@ public class MainActivity extends AppCompatActivity {
                     sendBotton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.blue));
                     dialogMsg.setText(getString(R.string.lng_error2));
                     dialogMsg.setTextColor(ContextCompat.getColor(getContext(), R.color.errcolo));
+                    reply_layout.setVisibility(View.GONE);
                 }
 
             }
+            mSetChat.set_isSend2ParamAns(false);
+
 
         }
     }
     private void getChatsRequest(){
         mGetChats.setmyID(myID);
-        mGetChats.setStarterUrl(myServerAddress + "getchats2.php?liivx=");
+        mGetChats.setStarterUrl(myServerAddress + "getchat24.php?liivx=");
         mGetChats.singleRequest(2068);
         mGetChatsTimer.startTimer();
         chatgetPerocess = true;
@@ -1006,21 +1035,22 @@ public class MainActivity extends AppCompatActivity {
                     String[] wholemsgfortest = echitems[0].split(">");
                     int lastChatIDD = Integer.parseInt(wholemsgfortest[0]);
                     if(lastChatIDD!=lastChatID){
-                        String strName, strMsg, strdatetime;
+                        String strName, strMsg, strdatetime, destini;
                         int userIDD = 0, chatIDD=0;
-                        removeAllItemsFromListview();
+                        removeAllItemsFromRecyclerView();
                         for(ii=(echitems.length-1);ii>=0;ii--){
                             String[] wholemsg = echitems[ii].split(">");
                             chatIDD = Integer.parseInt(wholemsg[0]);
                             userIDD = Integer.parseInt(wholemsg[1]);
-                            strName = wholemsg[2];
-                            strdatetime = wholemsg[3];
-                            strMsg = wholemsg[4];
+                            destini = wholemsg[2];
+                            strName = wholemsg[3];
+                            strdatetime = wholemsg[4];
+                            strMsg = wholemsg[5];
                             //hh = echitems[ii].indexOf(">");
                             //tempstrName = echitems[ii].substring(0,hh);
                             //tempstrMsg = echitems[ii].substring(hh+1);
                             boolean mtisMe = (userIDD==Integer.parseInt(myID));;
-                            setChatToRecyclerview(mtisMe, chatIDD, userIDD, strName, strdatetime, strMsg);
+                            setChatToRecyclerview(mtisMe, chatIDD, userIDD, destini, strName, strdatetime, strMsg);
                             lastChatID = chatIDD;
                         }
                     }
@@ -1040,10 +1070,36 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-    private void setChatToRecyclerview(Boolean itsmee,int usrID, int chatID, String txtTitle, String dtdt, String txtMessage) {
+    private void delChatsRequest(String cid){
+        mDelchat.setmyID(myID);
+        mDelchat.setStarterUrl(myServerAddress + "delchat24.php?liivx=");
+        mDelchat.setParams("cid","", "", "");
+        mDelchat.setValues(cid, "", "", "");
+        mDelchat.send1Params(2);
+        mDelchatTimer.startTimer();
+    }
+    private void delChatsRequestCheck(){
+        if(mDelchat.get_isSend1ParamAns() && !mDelchat.get_ansSend1Param().isEmpty()){
+            mDelchatTimer.stopTimer();
+            String completeresp = mDelchat.get_ansSend1Param();
+            if(completeresp.startsWith("ok")){
+                lastChatID = 0;
+                removeAllItemsFromRecyclerView();
+                mCounterGetchat = 100;
+                Toast.makeText(getContext(), getString(R.string.lng_delchatok), Toast.LENGTH_SHORT).show();
+            }else{
+
+                Toast.makeText(getContext(), completeresp + "_" + getString(R.string.lng_delchater), Toast.LENGTH_SHORT).show();
+            }
+            mDelchat.set_isSingleRequestAns(false);
+
+
+        }
+
+    }
+    private void setChatToRecyclerview(Boolean itsmee, int chatID, int usrID, String destii, String txtTitle, String dtdt, String txtMessage) {
         boolean temp_itischat = false;
         boolean temp_itischatvoc = false;
-        //Log.e("in","---------------------------" + txtMessage);
         if(txtMessage.length()>10){
             if(txtMessage.startsWith("IMG")){
 
@@ -1058,15 +1114,15 @@ public class MainActivity extends AppCompatActivity {
             if(temp_itischatvoc){
                 String[] echitems = txtMessage.split(" ");
                 String filen = echitems[2].replace(" ", "");
-                mList.add(new Model(itsmee, Model.AUDIO_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "voice/" + filen, usrID, chatID));
+                mList.add(new Model(itsmee, Model.AUDIO_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "voice/" + filen, usrID, chatID, destii));
             }else {
                 String[] echitems = txtMessage.split(" ");
                 String filen = echitems[2].replace(" ", "");
-                mList.add(new Model(itsmee, Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen, usrID, chatID));
+                mList.add(new Model(itsmee, Model.IMAGE_TYPE, R.drawable.d4, dtdt, txtTitle, "",myServerAddress + "upload/" + filen, usrID, chatID, destii));
             }
 
         }else{
-            mList.add(new Model(itsmee, Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, "", usrID, chatID));
+            mList.add(new Model(itsmee, Model.TEXT_TYPE, R.drawable.d4, dtdt,  txtTitle, txtMessage, "", usrID, chatID, destii));
 
         }
         mRecyclerView.setAdapter(adapter);
@@ -1074,9 +1130,45 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.scrollToPosition(mList.size()-1);
 
     }
-    private void removeAllItemsFromListview(){
+    private void removeAllItemsFromRecyclerView(){
         mList.clear();
         mRecyclerView.setAdapter(adapter);
+    }
+
+    private void getNotif(){
+        mNotifreg.singleRequest(2068);
+        mNotifregTimer.startTimer();
+    }
+    private void getNotifCheck(){
+        if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
+            mNotifregTimer.stopTimer();
+            String completeresp = mNotifreg.get_ansSingleRequest();
+            if(completeresp.startsWith("sqError")){
+                chatgetPerocess = false;
+            }else{
+                String withoutHtmlHeader = completeresp.substring(47);
+                if(withoutHtmlHeader.startsWith("ok")){
+                    String justChatsWithendBody = withoutHtmlHeader.substring(2);
+                    int b = justChatsWithendBody.indexOf("</body>") ;
+                    String justChat = justChatsWithendBody.substring(0, b);
+                    myFrag1.setVisibility(View.VISIBLE);
+
+                    Bundle bundle = new Bundle();
+                    String myMessage = justChat;
+                    bundle.putString("param1", myMessage );
+                    Fragment mServerAlarm = new ServerAlarm();
+                    mServerAlarm.setArguments(bundle);
+                    FragmentManager fm = getSupportFragmentManager();
+                    FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                    fragmentTransaction.replace(R.id.fragmentContainerView, mServerAlarm);
+                    fragmentTransaction.commit();
+                }
+
+            }
+        }
+        reqServerAlarm = false;
+        mNotifreg.set_isSingleRequestAns(false);
+
     }
 
     //endregion
@@ -1113,7 +1205,6 @@ public class MainActivity extends AppCompatActivity {
             conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
             String filenametosend = hereMyid + "_" + System.currentTimeMillis() + ".3gp";
             conn.setRequestProperty("uploaded_file", filenametosend);
-            Log.e("filename", "::::::::::::::::::::::::::::::::::::::::::::::::::::" + filenametosend);
             dos = new DataOutputStream(conn.getOutputStream());
 
             dos.writeBytes(twoHyphens + boundary + lineEnd);
@@ -1292,9 +1383,11 @@ public class MainActivity extends AppCompatActivity {
         mEditor.apply();
         toolbarTxtVeiw.setText(myName);
         myFrag1.setVisibility(View.GONE);
-
-        //mNotifreg.setmyID(myID);
-        //mNotifreg.setStarterUrl(myServerAddress + "reqnotif.php?liivx=");
+        mLivelog.setmyID(myID);
+        mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
+        mLivelog.setParams("usrname","", "", "");
+        mNotifreg.setmyID(myID);
+        mNotifreg.setStarterUrl(myServerAddress + "reqnotif24.php?liivx=");
         //mSetNotifCTX.setmyID(myID);
         //mSetNotifCTX.setStarterUrl(myServerAddress + "setp.php?liivx=");
 
@@ -1340,39 +1433,7 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
     //region None usage functions
-//    private void getNotif(){
-//        mNotifreg.singleRequest(180);
-//        mNotifregTimer.startTimer();
-//    }
-//    private void getNotifCheck(){
-//        if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
-//            Log.i("~~~~~~getNotif", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getNotif~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-//            mNotifregTimer.stopTimer();
-//            String respo = mNotifreg.get_ansSingleRequest();
-//            String isOk = respo.substring(0,6);
-//            if(isOk.equals("sqErro")){
-//                Log.i("~~~~~~getNotif", "                                 sqErro END                             try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-//                long templng1 = mainTimer.getCurrentDuration();
-//                if(templng1<((1000*MAIN_LOOP_SEC)/2)){
-//                    //getNotif();
-//                }else{
-//                    periodPerocess = false;
-//                }
-//            }else if(isOk.equals("cancel")){
-//                periodPerocess = false;
-//            }else if(isOk.equals("error!")){
-//                periodPerocess = false;
-//
-//            }else if(isOk.equals("<html>")){
-//                String responotif = respo.substring(53);
-//                textViewRespoNotif.setText(responotif);
-//                setNotifCTXf();
-//            }else{
-//
-//            }
-//            mNotifreg.set_isSingleRequestAns(false);
-//        }
-//    }
+
 
 //    private void setNotifCTXf(){
 //        mSetNotifCTX.setParams("p1","v1", "p2", "v2");
