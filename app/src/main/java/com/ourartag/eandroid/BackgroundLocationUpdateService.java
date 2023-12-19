@@ -1,5 +1,4 @@
 package com.ourartag.eandroid;
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -20,8 +19,6 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class BackgroundLocationUpdateService  extends Service {
     private NotificationCompat.Builder mBuilder;
@@ -70,7 +67,7 @@ public class BackgroundLocationUpdateService  extends Service {
     public void onCreate() {
         super.onCreate();
         context = this;
-        SERVICE_MAIN_LOOP_S = 4;
+        SERVICE_MAIN_LOOP_S = 15;
         stopService = false;
         channelName = getString(R.string.site_Address_quick);
         mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);

@@ -2,6 +2,7 @@ package com.ourartag.eandroid;
 
 import androidx.activity.result.ActivityResult;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView online_imgv, seen_imgv, myTumbnail;
     FragmentContainerView myFrag1;
     esTimer baseTimer, mainTimer, mLivelogTimer, mNotifregTimer, mSetNotifCTXTimer, mSetChatTimer, mGetChatsTimer, myusr0Timer, mDelchatTimer;
-    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, pathapp, upLoadVoiceServerUri, mChatDesti;
+    String myID, myName, myPass, notifCTS, cmdCTS, newchat, myLati, myLoni, myServerAddress, mIsLogin, nameAnyUserSelect, pathapp, upLoadVoiceServerUri, mChatDesti, mServerVersion;
     myVolley mLivelog, mSetChat, mGetChats, myusr0, mDelchat;
     SharedPreferences sharedPref;
     SharedPreferences.Editor mEditor;
@@ -91,8 +92,9 @@ public class MainActivity extends AppCompatActivity {
     MediaRecorder recorder;
     MediaPlayer mPlayer;
     Boolean menu_stat, periodPerocess, chatgetPerocess, myServiceEnable, isAnyUserSelect, isAnyUserSelectOnline, isAnyUserSelectSeen, iduserSeenNewChat, permissionTpRecVoice, reqServerAlarm;
+    Boolean reqVersionAlarm;
     private boolean fabStateRecord = false, fabStatePlay = false;
-    int MAIN_LOOP_SEC = 3, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter, lastChatID = 0;
+    int MAIN_LOOP_SEC = 5, TRY_T0_SEND_CHAT = 4, mainLoopTry, mCounterSendchat, mCounterGetchat, getModcounter, lastChatID = 0;
     //String[] mainListArray = {"Android","IPhone"};
     ArrayList<String> mainListArray=new ArrayList<String>();
 
@@ -118,8 +120,30 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.RECORD_AUDIO
     };
+
+
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    public static String[] storage_permissions_33 = {
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_AUDIO,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.RECORD_AUDIO
+    };
+
+    public static String[] permissions() {
+        String[] p;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            p = storage_permissions_33;
+        } else {
+            p = PERMISSIONS_STORAGE;
+        }
+        return p;
+    }
     public static float dpToPx(Context context, float valueInDp) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
@@ -128,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
     //region Overrides
 
-    @SuppressLint({"CutPasteId", "SdCardPath"})
+    @SuppressLint({"CutPasteId", "SdCardPath", "MissingInflatedId"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -292,9 +316,11 @@ public class MainActivity extends AppCompatActivity {
         upLoadVoiceServerUri = myServerAddress + "upvoice.php";
         pathapp =  "/data/data/com.ourartag.eandroid/" ;
         mChatDesti = "0";
+        mServerVersion = "0";
         reqServerAlarm = true;
         menu_stat = false;
         periodPerocess = false;
+        reqVersionAlarm = true;
         chatgetPerocess = false;
         notifCTS = "";
         cmdCTS = "";
@@ -322,10 +348,13 @@ public class MainActivity extends AppCompatActivity {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         adapter.setOnItemClickListener(new RecyclerViewClickListener(){
 
+
+
+
             @SuppressLint("SetTextI18n")
             @Override
-            public void recyclerViewListClicked(View v, int position) {
-                nameAnyUserSelect = mList.get(position).getTitle();
+            public void recyclerViewListClicked(View v, int position, String chatTitle) {
+                nameAnyUserSelect = chatTitle;
                 if(!nameAnyUserSelect.isEmpty()){
 
                     if(nameAnyUserSelect.equals(myName)){
@@ -348,7 +377,6 @@ public class MainActivity extends AppCompatActivity {
                     fragmentTransaction.replace(R.id.fragmentContainerView, mViewImageFullscreen);
                     fragmentTransaction.commit();
                 }
-
             }
 
             @Override
@@ -363,6 +391,11 @@ public class MainActivity extends AppCompatActivity {
                 reply_title.setText(chatTitle);
                 reply_msg.setText(chatMsgFirstLine);
                 mChatDesti = chatID + "";
+            }
+
+            @Override
+            public void rVClicked_openImage(View v, int position, String imageUrl) {
+
             }
 
         });
@@ -482,6 +515,7 @@ public class MainActivity extends AppCompatActivity {
         btn_mainFab5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 requestAudioPermissions();
                 if(permissionTpRecVoice){
                     if(!fabStateRecord){
@@ -554,7 +588,7 @@ public class MainActivity extends AppCompatActivity {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    mPlayer.setLooping(true);
+                    //mPlayer.setLooping(true);
                     mPlayer.start();
                     btn_fabPlay.setImageResource(R.drawable.volume_xmark_50);
                     fabStatePlay = true;
@@ -805,35 +839,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestAudioPermissions() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
 
-            //When permission is not granted by user, show them message why this permission is needed.
-            int MY_PERMISSIONS_RECORD_AUDIO = 1;
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.RECORD_AUDIO)) {
-                Toast.makeText(this, "Please grant permissions to record audio", Toast.LENGTH_LONG).show();
+        ActivityCompat.requestPermissions(MainActivity.this,
+                permissions(),
+                1);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            Boolean p1 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+            Boolean p2 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
+            Boolean p3 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED;
+            Boolean p4 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED;
 
-                //Give user option to still opt-in the permissions
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
-
-            } else {
-                // Show user dialog to grant permission to record audio
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
-            }
-        }
-        //If permission is granted, then go ahead recording audio
-        else if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            permissionTpRecVoice = true;
-
+            //Log.e("per", "-----------------------" + p1 + p2 + p3 + p4);
+            permissionTpRecVoice = p1 && p2 && p3 && p4;
+        }else{
+            Boolean p1 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+            Boolean p2 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            Boolean p3 = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            permissionTpRecVoice = p1 && p2 && p3;
+            //Log.e("per", "-----------------------" + p1 + p2 + p3);
         }
     }
     //endregion
@@ -874,15 +897,12 @@ public class MainActivity extends AppCompatActivity {
         if(!periodPerocess){
             mainLoopTry = 0;
             if(isAnyUserSelect){
-
-
                 mLivelog.setValues(nameAnyUserSelect, "", "", "");
-                mLivelog.send1Params(5);
+                mLivelog.send1Params(11);
                 periodPerocess = true;
             }else {
-                mLivelog.setParams("no","", "", "");
-                mLivelog.setValues("0", "", "", "");
-                mLivelog.send1Params(5);
+                mLivelog.setValues("none", "", "", "");
+                mLivelog.send1Params(11);
                 periodPerocess = true;
 
             }
@@ -926,18 +946,16 @@ public class MainActivity extends AppCompatActivity {
             Log.i("~~~~~~~LiveLog", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~LiveLog~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
             mLivelogTimer.stopTimer();
             String isOk = mLivelog.get_ansSend1Param();
-            if(isOk.equals("p1Err")){
+            if(isOk.startsWith("p1Err")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt2));
                 Log.i("~~~~~~~LiveLog", "                                 sqE END                                try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-                periodPerocess = false;
                 mainTimer.stopTimer();
                 mainTimer.startTimer();
-            }else if(isOk.equals("error")){
+            }else if(isOk.startsWith("error")){
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt3));
                 Log.i("~~~~~~~LiveLog", "                                 err END                                try(" + mainLoopTry + ") delay: " + Math.floor(mainTimer.getCurrentDuration()));
-                periodPerocess = false;
             }else {
                 mainAppStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.okcolor));
                 mainAppStatus.setText(getString(R.string.lng_mainStatus_txt4));
@@ -945,7 +963,27 @@ public class MainActivity extends AppCompatActivity {
                 cmdCTS = isOk.substring(0,1);
                 newchat = isOk.substring(2,3);//"00000"
                 String tempOnlin = isOk.substring(3,4);
-                String tempSeen = isOk.substring(4);
+                String tempSeen = isOk.substring(4,5);
+                mServerVersion = isOk.substring(5);
+                if(mServerVersion.length()>6){
+                    mServerVersion.substring(0,6);
+                }
+                if(!mServerVersion.equals(getString(R.string.app_ver_nodot)) && reqVersionAlarm){
+                    String tmpstrtosend = getString(R.string.lng_verAlarm1);
+                    tmpstrtosend = tmpstrtosend + "\n" + getString(R.string.lng_verAlarm2) + " " +  getString(R.string.app_ver_nodot);
+                    tmpstrtosend = tmpstrtosend + "\n" + getString(R.string.lng_verAlarm3) + " " +   mServerVersion;
+                    myFrag1.setVisibility(View.VISIBLE);
+                    Bundle bundle = new Bundle();
+                    bundle.putString("param1", tmpstrtosend);
+                    Fragment mServerAlarm = new ServerAlarm();
+                    mServerAlarm.setArguments(bundle);
+                    FragmentManager fm = getSupportFragmentManager();
+                    FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                    fragmentTransaction.replace(R.id.fragmentContainerView, mServerAlarm);
+                    fragmentTransaction.commit();
+                    reqVersionAlarm = false;
+                }
+
                 String mman = sharedPref.getString("man", "");
                 if(newchat.equals("1") && mman.equals("hastam")){
 
@@ -959,8 +997,9 @@ public class MainActivity extends AppCompatActivity {
 
                 isAnyUserSelectOnline = tempOnlin.equals("1");
                 isAnyUserSelectSeen = tempSeen.equals("0");
-                periodPerocess = false;
+
             }
+            periodPerocess = false;
             mLivelog.set_isSend1ParamAns(false);
 
 
@@ -1143,19 +1182,18 @@ public class MainActivity extends AppCompatActivity {
         if(mNotifreg.get_isSingleRequestAns() && !mNotifreg.get_ansSingleRequest().isEmpty()){
             mNotifregTimer.stopTimer();
             String completeresp = mNotifreg.get_ansSingleRequest();
-            if(completeresp.startsWith("sqError")){
-                chatgetPerocess = false;
-            }else{
+            if(!completeresp.startsWith("sqError")){
+
                 String withoutHtmlHeader = completeresp.substring(47);
                 if(withoutHtmlHeader.startsWith("ok")){
                     String justChatsWithendBody = withoutHtmlHeader.substring(2);
                     int b = justChatsWithendBody.indexOf("</body>") ;
                     String justChat = justChatsWithendBody.substring(0, b);
-                    myFrag1.setVisibility(View.VISIBLE);
 
+
+                    myFrag1.setVisibility(View.VISIBLE);
                     Bundle bundle = new Bundle();
-                    String myMessage = justChat;
-                    bundle.putString("param1", myMessage );
+                    bundle.putString("param1", justChat);
                     Fragment mServerAlarm = new ServerAlarm();
                     mServerAlarm.setArguments(bundle);
                     FragmentManager fm = getSupportFragmentManager();
@@ -1384,7 +1422,7 @@ public class MainActivity extends AppCompatActivity {
         toolbarTxtVeiw.setText(myName);
         myFrag1.setVisibility(View.GONE);
         mLivelog.setmyID(myID);
-        mLivelog.setStarterUrl(myServerAddress + "liveu.php?liivx=");
+        mLivelog.setStarterUrl(myServerAddress + "live24.php?liivx=");
         mLivelog.setParams("usrname","", "", "");
         mNotifreg.setmyID(myID);
         mNotifreg.setStarterUrl(myServerAddress + "reqnotif24.php?liivx=");

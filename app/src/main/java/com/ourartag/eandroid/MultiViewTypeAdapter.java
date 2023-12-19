@@ -3,6 +3,7 @@ package com.ourartag.eandroid;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.PopupMenu;
 import android.view.LayoutInflater;
@@ -101,8 +102,6 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
                         ((TextTypeViewHolder) holder).mText_reply_layout.setVisibility(View.VISIBLE);
                         ((TextTypeViewHolder) holder).mText_reply.setText(object.getDestini());
                     }
-
-
                     break;
                 case Model.IMAGE_TYPE:
                     ((ImageTypeViewHolder) holder).mImage_type_icon.setImageResource(object.mWhichicon);
@@ -163,19 +162,14 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
                                     mPlayer.stop();
                                     mPlayer.release();
                                     mPlayer = null;
-
-
                                 }
                                 ((AudioTypeViewHolder) holder).fab.setImageResource(R.drawable.volume_50);
                                 fabStateVolume = false;
 
                             } else {
                                 try {
-
-                                    //Uri uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
                                     mPlayer = new MediaPlayer();
                                     mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                                    //mPlayer = MediaPlayer.create(getContext(), uri);
                                     mPlayer.setDataSource(object.mImageUrl);
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -185,7 +179,7 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                                mPlayer.setLooping(true);
+                                //mPlayer.setLooping(true);
                                 mPlayer.start();
 
                                 ((AudioTypeViewHolder) holder).fab.setImageResource(R.drawable.volume_xmark_50);
@@ -202,6 +196,7 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
     public int getItemCount() {
         return dataSet.size();
     }
+
 
     public Model getItemData(int pos) {
         return dataSet.get(pos);
@@ -221,7 +216,7 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
 
         public TextTypeViewHolder(View itemView, final RecyclerViewClickListener listener) {
             super(itemView);
-            int position = getAdapterPosition();
+
 
             this.mText_type_cardheader = (LinearLayout) itemView.findViewById(R.id.text_type_cardheader);
             this.mText_type_card_view = (CardView) itemView.findViewById(R.id.text_type_card_view);
@@ -236,12 +231,10 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
             mText_type_title.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                     if (listener != null) {
-
+                        int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            listener.recyclerViewListClicked(v, position);
-
+                            listener.recyclerViewListClicked(v, position, object.getTitle());
                         }
                     }
                 }
@@ -305,7 +298,6 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
 
 
     }
-
     public static class ImageTypeViewHolder extends RecyclerView.ViewHolder {
 
         TextView mImage_type_title, mImage_type_dt, mImage_reply;
@@ -316,7 +308,7 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
         Model object;
         public ImageTypeViewHolder(View itemView, final RecyclerViewClickListener listener) {
             super(itemView);
-            int position = getAdapterPosition();
+
             this.mImage_type_cardheader = (LinearLayout) itemView.findViewById(R.id.image_type_cardheader);
             this.mImage_type_icon = (ImageView) itemView.findViewById(R.id.image_type_icon);
             this.mImage_type_title = (TextView) itemView.findViewById(R.id.image_type_title);
@@ -330,9 +322,22 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
                 public void onClick(View v) {
 
                     if (listener != null) {
-
+                        int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            listener.recyclerViewListClicked(v, position);
+                            listener.recyclerViewListClicked(v, position, object.getTitle());
+
+                        }
+                    }
+                }
+            });
+            mImage_type_image.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    if (listener != null) {
+                        int position = getAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            listener.rVClicked_openImage(v, position, object.getImageURL());
 
                         }
                     }
@@ -384,7 +389,6 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
 
         }
     }
-
     public static class AudioTypeViewHolder extends RecyclerView.ViewHolder {
 
         TextView mAudio_type_title, mAudio_type_dt, mAudio_reply;
@@ -397,7 +401,6 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
 
         public AudioTypeViewHolder(View itemView, final RecyclerViewClickListener listener) {
             super(itemView);
-            int position = getAdapterPosition();
             this.mAudio_type_cardheader = (LinearLayout) itemView.findViewById(R.id.audio_type_cardheader);
             this.mAudio_type_icon = (ImageView) itemView.findViewById(R.id.audio_type_icon);
             this.mAudio_type_title = (TextView) itemView.findViewById(R.id.audio_type_title);
@@ -411,8 +414,9 @@ public class MultiViewTypeAdapter extends RecyclerView.Adapter {
                 public void onClick(View v) {
 
                     if (listener != null) {
+                        int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            listener.recyclerViewListClicked(v, position);
+                            listener.recyclerViewListClicked(v, position, object.getTitle());
 
                         }
                     }

@@ -49,17 +49,10 @@ public class BrowsAllImages extends AppCompatActivity {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         adapterAll.setOnItemClickListener(new RecyclerViewClickListener(){
 
+
+
             @Override
-            public void recyclerViewListClicked(View v, int position) {
-                String tmpBooli = mListAll.get(position).getImageURL();
-                if(!tmpBooli.isEmpty()){
-                    myFrag1.setVisibility(View.VISIBLE);
-                    Fragment mViewImageFullscreen = new ViewImageFullscreen2(tmpBooli);
-                    FragmentManager fm = getSupportFragmentManager();
-                    FragmentTransaction fragmentTransaction = fm.beginTransaction();
-                    fragmentTransaction.replace(R.id.fragmentContainerView2, mViewImageFullscreen);
-                    fragmentTransaction.commit();
-                }
+            public void recyclerViewListClicked(View v, int position, String chatTitle) {
 
             }
 
@@ -73,7 +66,17 @@ public class BrowsAllImages extends AppCompatActivity {
 
             }
 
-
+            @Override
+            public void rVClicked_openImage(View v, int position, String imageUrl) {
+                if(!imageUrl.isEmpty()){
+                    myFrag1.setVisibility(View.VISIBLE);
+                    Fragment mViewImageFullscreen = new ViewImageFullscreen2(imageUrl);
+                    FragmentManager fm = getSupportFragmentManager();
+                    FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                    fragmentTransaction.replace(R.id.fragmentContainerView2, mViewImageFullscreen);
+                    fragmentTransaction.commit();
+                }
+            }
 
 
         });
@@ -99,19 +102,15 @@ public class BrowsAllImages extends AppCompatActivity {
         if(mGetFiles.get_isSingleRequestAns() && !mGetFiles.get_ansSingleRequest().isEmpty()){
             mGetFilesTimer.stopTimer();
             String completeresp = mGetFiles.get_ansSingleRequest();
-            if(completeresp.equals("sqError")){
-                filegetPerocess = false;
-            }else{
-                String aslStr = "";
-                String strttem = completeresp.substring(0,53);
-                strttem = strttem.substring(47);
-                String isOk = strttem.substring(0,2);
-                //int numberofe =Integer.valueOf(strttem.substring(2));
-                if(isOk.equals("ok")){
-                    Log.i("~~~~~~~files", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~get files ok~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ");
-                    int b = completeresp.indexOf("</body>") ;
-                    aslStr = completeresp.substring(53, b);
-                    String[] echitems = aslStr.split(";");
+            if(!completeresp.startsWith("sqError")){
+
+                String withoutHtmlHeader = completeresp.substring(47);
+                if(withoutHtmlHeader.startsWith("ok")){
+                    String justChatsWithendBody = withoutHtmlHeader.substring(2);
+                    int b = justChatsWithendBody.indexOf("</body>") ;
+                    String justFiles = justChatsWithendBody.substring(0, b);
+
+                    String[] echitems = justFiles.split(";");
                     int ii=0, hh=0;
 
                     removeAllItemsFromListview();
@@ -122,12 +121,8 @@ public class BrowsAllImages extends AppCompatActivity {
 
 
                     }
-
-
-
-                }else{
-                    filegetPerocess = false;
                 }
+
             }
             mGetFiles.set_isSingleRequestAns(false);
 
@@ -140,7 +135,7 @@ public class BrowsAllImages extends AppCompatActivity {
         //Log.e("in","---------------------------" + txtMessage);
         String[] findUserId = txtfilen.split("_");
         int userIddd = Integer.parseInt(findUserId[0]);
-        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "", txtfilen, "",myServerAddress +  "upload/" + txtfilen, userIddd,0, ""));
+        mListAll.add(new Model(false, Model.IMAGE_TYPE, R.drawable.d4, "_", txtfilen, "",myServerAddress +  "upload/" + txtfilen, userIddd,0, ""));
         mRecyclerViewAll.setAdapter(adapterAll);
         //mRecyclerView.smoothScrollToPosition(mList.size()-1);
         //mRecyclerViewAll.scrollToPosition(mListAll.size()-1);

@@ -17,7 +17,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import android.Manifest;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,13 +34,9 @@ import com.google.android.gms.tasks.Task;
 import org.neshan.mapsdk.MapView;
 import org.neshan.common.model.LatLng;
 import org.neshan.mapsdk.model.Marker;
-import com.carto.styles.AnimationStyle;
-import com.carto.styles.AnimationStyleBuilder;
-import com.carto.styles.AnimationType;
 import com.carto.styles.MarkerStyle;
 import com.carto.styles.MarkerStyleBuilder;
 import com.carto.utils.BitmapUtils;
-import com.google.android.gms.location.FusedLocationProviderClient;
 
 /**
  * A simple {@link Fragment} subclass.
